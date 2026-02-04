@@ -1,27 +1,6 @@
-# Environment
+node_modules/
+webapp/node_modules/
+webapp/dist/
+.DS_Store
 .env
 .env.local
-.env.production
-
-# Dependencies
-node_modules/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# API Keys
-*-keys.json
-*-credentials.*
-
-# CloudBase
-.cloudbase/
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-
-# IDE
-.vscode/
-.idea/

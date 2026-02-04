@@ -1,7 +1,19 @@
 /**
  * Mind Our Times — 前端逻辑
- * CloudBase JS SDK + Vanilla JS
+ * CloudBase JS SDK 2.x + Vite
  */
+
+import cloudbase from '@cloudbase/js-sdk'
+
+// === 配置 ===
+const CONFIG = {
+  envId: 'mind-our-times-3g7c3va270081e5c',
+  siteName: 'Mind Our Times',
+  siteDesc: '追踪时代思想脉搏',
+  cacheToday: 5 * 60 * 1000,
+  cacheArchive: 60 * 60 * 1000,
+  cacheDomains: 24 * 60 * 60 * 1000
+}
 
 // === CloudBase 初始化 ===
 const tcbApp = cloudbase.init({
