@@ -4,7 +4,7 @@
  */
 const CONFIG = {
   // CloudBase 环境 ID
-  envId: 'thoughts-rador26-2f3u8ht52110fab',
+  envId: 'mind-our-times-3g7c3va270081e5c',
   
   // API 基础地址（CloudBase HTTP 触发）
   // 部署后替换为实际地址
