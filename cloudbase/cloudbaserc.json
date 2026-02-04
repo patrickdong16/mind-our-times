@@ -1,0 +1,20 @@
+{
+  "envId": "thoughts-rador26-2f3u8ht52110fab",
+  "region": "ap-shanghai",
+  "functionRoot": "functions",
+  "functions": [
+    {
+      "name": "articles-write",
+      "timeout": 30,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "envVariables": {}
+    },
+    {
+      "name": "articles-read",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main"
+    }
+  ]
+}

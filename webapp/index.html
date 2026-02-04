@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>Mind Our Times</title>
+  <meta name="description" content="追踪时代思想脉搏 — 每日全球顶级思想者的观点与时代情绪观测">
+  
+  <!-- OG Tags -->
+  <meta property="og:title" content="Mind Our Times">
+  <meta property="og:description" content="追踪时代思想脉搏">
+  <meta property="og:type" content="website">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>Mind Our Times</h1>
+      <div class="subtitle">追踪时代思想脉搏</div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="today" onclick="switchTab('today')">今日</button>
+      <button class="tab" data-tab="archive" onclick="switchTab('archive')">往期</button>
+    </nav>
+
+    <!-- 领域标签 -->
+    <div class="domain-filters" id="domainFilters"></div>
+
+    <!-- 内容区域 -->
+    <main id="content">
+      <div class="loading">加载中...</div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Mind Our Times · 时代思想观测站
+    </footer>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
