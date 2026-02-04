@@ -4,7 +4,7 @@
  */
 
 // === CloudBase 初始化 ===
-const tcbApp = cloudbase.init({
+const tcbApp = tcb.init({
   env: CONFIG.envId
 });
 
