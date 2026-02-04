@@ -52,27 +52,39 @@ function validateArticle(article, validDomains) {
 
 exports.main = async (event) => {
   try {
-    // === 认证 ===
-    const apiKey = event.headers?.['x-api-key'] || event.queryStringParameters?.key || '';
-    const expectedKey = process.env.API_KEY || '';
+    // === 判断调用方式：HTTP or CLI ===
+    const isHttpInvoke = event.headers || event.queryStringParameters;
     
-    if (!expectedKey) {
-      return { statusCode: 500, body: JSON.stringify({ success: false, error: 'API_KEY 未配置' }) };
+    let date, articles;
+    
+    if (isHttpInvoke) {
+      // HTTP调用：需要认证
+      const apiKey = event.headers?.['x-api-key'] || event.queryStringParameters?.key || '';
+      const expectedKey = process.env.API_KEY || '';
+      
+      if (!expectedKey) {
+        return { statusCode: 500, body: JSON.stringify({ success: false, error: 'API_KEY 未配置' }) };
+      }
+      
+      if (apiKey !== expectedKey) {
+        return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Unauthorized' }) };
+      }
+      
+      // 解析请求体
+      let body;
+      try {
+        body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+      } catch (e) {
+        return { statusCode: 400, body: JSON.stringify({ success: false, error: '无效 JSON' }) };
+      }
+      
+      date = body.date;
+      articles = body.articles;
+    } else {
+      // CLI直接调用：event就是payload
+      date = event.date;
+      articles = event.articles;
     }
-    
-    if (apiKey !== expectedKey) {
-      return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Unauthorized' }) };
-    }
-    
-    // === 解析请求体 ===
-    let body;
-    try {
-      body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-    } catch (e) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: '无效 JSON' }) };
-    }
-    
-    const { date, articles } = body || {};
     
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: '缺少或无效日期（格式 YYYY-MM-DD）' }) };
@@ -117,6 +129,7 @@ exports.main = async (event) => {
       author_name: article.author_name,
       author_intro: article.author_intro,
       source: article.source,
+      source_date: article.source_date || '',
       source_url: article.source_url,
       content: article.content,
       insight: article.insight,

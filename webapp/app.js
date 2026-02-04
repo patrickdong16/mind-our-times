@@ -78,7 +78,7 @@ function setCache(key, data, ttl) {
 // === 领域配置 ===
 const DOMAIN_ICONS = {
   'T': '🔧', 'P': '🏛️', 'H': '📜',
-  'Phi': '💭', 'R': '⛪', 'F': '💰'
+  'Φ': '🤔', 'R': '✝️', 'F': '💰'
 };
 
 function renderDomainFilters(domains) {
@@ -135,6 +135,13 @@ function formatDate(dateStr) {
   return y + '年' + m + '月' + d + '日 · 星期' + weekdays[date.getDay()];
 }
 
+function formatSourceDate(dateStr) {
+  if (!dateStr) return '';
+  var parts = dateStr.split('-');
+  var m = parseInt(parts[1]), d = parseInt(parts[2]);
+  return m + '月' + d + '日';
+}
+
 function renderArticleCard(article) {
   var domainObj = state.domains.find(function(d) { return d._id === article.domain; });
   var domainName = domainObj ? domainObj.name : article.domain;
@@ -146,7 +153,7 @@ function renderArticleCard(article) {
     '<div class="article-meta"><span class="author">' + escapeHtml(article.author_name) + '</span> · ' + escapeHtml(article.author_intro) + '</div>' +
     '<div class="article-content">' + escapeHtml(article.content) + '</div>' +
     '<div class="article-insight">💭 ' + escapeHtml(article.insight) + '</div>' +
-    '<div class="article-source"><a href="' + escapeHtml(article.source_url) + '" target="_blank" rel="noopener">原文 →</a> <span class="date">' + escapeHtml(article.source) + '</span></div>' +
+    '<div class="article-source"><a href="' + escapeHtml(article.source_url) + '" target="_blank" rel="noopener">原文 →</a> <span class="date">' + escapeHtml(article.source) + (article.source_date ? ' · ' + formatSourceDate(article.source_date) : '') + '</span></div>' +
     '</article>';
 }
 
