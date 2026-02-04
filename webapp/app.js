@@ -5,7 +5,7 @@
 
 // === CloudBase 初始化 ===
 const tcbApp = cloudbase.init({
-  env: 'thoughts-rador26-2f3u8ht52110fab'
+  env: CONFIG.envId
 });
 
 // === 状态 ===
