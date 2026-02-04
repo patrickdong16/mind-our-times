@@ -37,7 +37,7 @@ async function ensureAuth() {
   if (state.authed) return;
   try {
     const auth = tcbApp.auth({ persistence: 'local' });
-    await auth.anonymousAuthProvider().signIn();
+    await auth.signInAnonymously();  // SDK 2.x API
     state.authed = true;
   } catch (e) {
     console.error('Auth failed:', e);
