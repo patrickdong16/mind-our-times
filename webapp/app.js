@@ -29,7 +29,15 @@ const state = {
   archiveData: null,
   archivePage: 1,
   archiveHasMore: false,
-  authed: false
+  authed: false,
+  // 搜索相关
+  searchKeyword: '',
+  searchResults: null,
+  searchLoading: false,
+  searchTimer: null,
+  // 播客日
+  podcastData: null,
+  podcastLoading: false,
 };
 
 // === CloudBase 认证 + 云函数调用 ===
@@ -109,13 +117,187 @@ function toggleDomain(domain) {
       tag.classList.toggle('active', state.activeDomains.has(d));
     }
   });
-  if (state.currentTab === 'today') renderToday();
-  else renderArchive();
+  if (state.currentTab === 'today') {
+    renderToday();
+  } else if (state.searchKeyword && state.searchResults) {
+    renderSearchResults();
+  } else {
+    renderArchive();
+  }
 }
 
 function filterArticles(articles) {
   if (state.activeDomains.size === 0) return articles;
   return articles.filter(function(a) { return state.activeDomains.has(a.domain); });
+}
+
+// === 搜索功能 ===
+function highlightText(text, keyword) {
+  if (!text || !keyword) return escapeHtml(text);
+  var escaped = escapeHtml(text);
+  var escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var regex = new RegExp('(' + escapedKeyword + ')', 'gi');
+  return escaped.replace(regex, '<mark>$1</mark>');
+}
+
+function renderSearchBox() {
+  var existing = document.getElementById('searchBox');
+  if (existing) return;
+  
+  var searchHtml = '<div class="search-box" id="searchBox">' +
+    '<div class="search-input-wrap">' +
+    '<svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>' +
+    '<input type="text" id="searchInput" placeholder="搜索文章标题、内容..." autocomplete="off" />' +
+    '<button class="search-clear" id="searchClear" style="display:none" onclick="clearSearch()">✕</button>' +
+    '</div>' +
+    '</div>';
+  
+  var content = document.getElementById('content');
+  content.insertAdjacentHTML('beforebegin', searchHtml);
+  
+  var input = document.getElementById('searchInput');
+  input.addEventListener('input', function() {
+    var keyword = this.value.trim();
+    var clearBtn = document.getElementById('searchClear');
+    clearBtn.style.display = keyword ? 'flex' : 'none';
+    
+    if (state.searchTimer) clearTimeout(state.searchTimer);
+    
+    if (!keyword) {
+      state.searchKeyword = '';
+      state.searchResults = null;
+      renderArchive();
+      return;
+    }
+    
+    state.searchTimer = setTimeout(function() {
+      performSearch(keyword);
+    }, 300);
+  });
+  
+  // 回车立即搜索
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      var keyword = this.value.trim();
+      if (keyword) {
+        if (state.searchTimer) clearTimeout(state.searchTimer);
+        performSearch(keyword);
+      }
+    }
+  });
+}
+
+function removeSearchBox() {
+  var existing = document.getElementById('searchBox');
+  if (existing) existing.remove();
+  state.searchKeyword = '';
+  state.searchResults = null;
+  if (state.searchTimer) clearTimeout(state.searchTimer);
+}
+
+async function performSearch(keyword) {
+  state.searchKeyword = keyword;
+  state.searchLoading = true;
+  var content = document.getElementById('content');
+  content.innerHTML = '<div class="loading">搜索中...</div>';
+  
+  try {
+    var data = await callFunction('articles-read', { action: 'search', keyword: keyword, limit: 50 });
+    state.searchResults = data;
+    state.searchLoading = false;
+    renderSearchResults();
+  } catch (e) {
+    state.searchLoading = false;
+    content.innerHTML = '<div class="error-state"><div>搜索失败，请稍后重试</div></div>';
+  }
+}
+
+function clearSearch() {
+  var input = document.getElementById('searchInput');
+  if (input) input.value = '';
+  var clearBtn = document.getElementById('searchClear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  state.searchKeyword = '';
+  state.searchResults = null;
+  if (state.searchTimer) clearTimeout(state.searchTimer);
+  renderArchive();
+}
+
+function renderSearchArticleCard(article, keyword) {
+  var domainObj = state.domains.find(function(d) { return d._id === article.domain; });
+  var domainName = domainObj ? domainObj.name : article.domain;
+  var icon = DOMAIN_ICONS[article.domain] || '';
+  
+  var titleHtml = highlightText(article.title, keyword);
+  var contentHtml = keyword ? getHighlightedSnippet(article.content, keyword) : escapeHtml(article.content);
+  var insightHtml = highlightText(article.insight, keyword);
+  
+  return '<article class="article-card" data-domain="' + article.domain + '">' +
+    '<div class="article-domain">' + icon + ' ' + domainName + '</div>' +
+    '<h2 class="article-title">' + titleHtml + '</h2>' +
+    '<div class="article-meta"><span class="author">' + escapeHtml(article.author_name) + '</span> · ' + escapeHtml(article.author_intro) + '</div>' +
+    '<div class="article-content">' + contentHtml + '</div>' +
+    '<div class="article-insight">💭 ' + insightHtml + '</div>' +
+    '<div class="article-source"><a href="' + escapeHtml(article.source_url) + '" target="_blank" rel="noopener">原文 →</a> <span class="date">' + escapeHtml(article.source) + (article.source_date ? ' · ' + formatSourceDate(article.source_date) : '') + '</span></div>' +
+    '</article>';
+}
+
+function getHighlightedSnippet(text, keyword) {
+  if (!text || !keyword) return escapeHtml(text);
+  var lowerText = text.toLowerCase();
+  var lowerKeyword = keyword.toLowerCase();
+  var idx = lowerText.indexOf(lowerKeyword);
+  
+  if (idx === -1) return escapeHtml(text);
+  
+  // 截取关键词附近的文本作为片段
+  var snippetStart = Math.max(0, idx - 60);
+  var snippetEnd = Math.min(text.length, idx + keyword.length + 200);
+  var snippet = text.substring(snippetStart, snippetEnd);
+  if (snippetStart > 0) snippet = '…' + snippet;
+  if (snippetEnd < text.length) snippet = snippet + '…';
+  
+  return highlightText(snippet, keyword);
+}
+
+function renderSearchResults() {
+  var content = document.getElementById('content');
+  var keyword = state.searchKeyword;
+  var results = state.searchResults;
+  
+  if (!results || !results.articles || results.articles.length === 0) {
+    content.innerHTML = '<div class="search-results-header">找到 <strong>0</strong> 篇相关文章</div>' +
+      '<div class="empty-state"><div class="icon">🔍</div><div>未找到与「' + escapeHtml(keyword) + '」相关的文章</div></div>';
+    return;
+  }
+  
+  var filtered = filterArticles(results.articles);
+  
+  var html = '<div class="search-results-header">找到 <strong>' + results.total + '</strong> 篇相关文章' +
+    (results.total > filtered.length && state.activeDomains.size > 0 ? '，当前筛选显示 ' + filtered.length + ' 篇' : '') +
+    '</div>';
+  
+  if (filtered.length === 0) {
+    html += '<div class="empty-state"><div>当前领域筛选下无匹配结果</div></div>';
+  } else {
+    // 按日期分组
+    var grouped = {};
+    filtered.forEach(function(a) {
+      if (!grouped[a.date]) grouped[a.date] = [];
+      grouped[a.date].push(a);
+    });
+    var dates = Object.keys(grouped).sort().reverse();
+    
+    dates.forEach(function(date) {
+      html += '<div class="search-date-label">' + formatDate(date) + '</div>';
+      grouped[date].forEach(function(article) {
+        html += renderSearchArticleCard(article, keyword);
+      });
+    });
+  }
+  
+  content.innerHTML = html;
 }
 
 // === 渲染 ===
@@ -211,8 +393,13 @@ async function switchTab(tab) {
     t.classList.toggle('active', t.dataset.tab === tab);
   });
   window.location.hash = tab;
-  if (tab === 'today') await loadToday();
-  else await loadArchive();
+  if (tab === 'today') {
+    removeSearchBox();
+    await loadToday();
+  } else {
+    renderSearchBox();
+    await loadArchive();
+  }
 }
 
 // === 数据加载 ===
@@ -293,5 +480,7 @@ window.switchTab = switchTab;
 window.toggleDomain = toggleDomain;
 window.toggleArchiveGroup = toggleArchiveGroup;
 window.loadMoreArchive = loadMoreArchive;
+window.clearSearch = clearSearch;
+window.performSearch = performSearch;
 
 document.addEventListener('DOMContentLoaded', init);

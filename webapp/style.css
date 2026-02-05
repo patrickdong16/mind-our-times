@@ -322,10 +322,130 @@ body {
   color: var(--text-muted);
 }
 
+/* --- 搜索框 --- */
+.search-box {
+  padding: 12px 0 4px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.search-box input {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  padding: 12px 40px 12px 42px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.search-box input:focus {
+  border-color: var(--text-muted);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-box input:focus {
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+  }
+}
+
+.search-clear {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--tag-bg);
+  color: var(--text-muted);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search-clear:hover {
+  background: var(--border);
+  color: var(--text-secondary);
+}
+
+/* --- 搜索结果 --- */
+.search-results-header {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding: 8px 0 12px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 4px;
+}
+
+.search-results-header strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.search-date-label {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 16px 0 4px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* --- 关键词高亮 --- */
+mark {
+  background: rgba(192, 57, 43, 0.12);
+  color: var(--accent);
+  padding: 1px 2px;
+  border-radius: 2px;
+  font-style: normal;
+}
+
+@media (prefers-color-scheme: dark) {
+  mark {
+    background: rgba(224, 90, 74, 0.2);
+    color: var(--accent);
+  }
+}
+
 /* --- 响应式 --- */
 @media (max-width: 480px) {
   :root { --spacing: 16px; }
   .header h1 { font-size: 1.5rem; }
   .article-title { font-size: 1.1rem; }
   .article-content { font-size: 0.95rem; }
+  .search-box input {
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+    padding: 11px 40px 11px 40px;
+  }
 }
