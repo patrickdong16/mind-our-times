@@ -1,0 +1,13 @@
+{
+  "envId": "mind-our-times-3g7c3va270081e5c",
+  "region": "ap-shanghai",
+  "functionRoot": "functions",
+  "functions": [
+    {
+      "name": "podcast-read",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main"
+    }
+  ]
+}

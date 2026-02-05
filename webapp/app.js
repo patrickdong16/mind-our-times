@@ -386,6 +386,182 @@ function renderArchive() {
 
 function toggleArchiveGroup(el) { el.classList.toggle('open'); }
 
+// === 播客日功能 ===
+
+function formatPodcastDate(isoStr) {
+  if (!isoStr) return '';
+  var d = new Date(isoStr);
+  var now = new Date();
+  var diffMs = now - d;
+  var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 7) return diffDays + '天前';
+  if (diffDays < 30) return Math.floor(diffDays / 7) + '周前';
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+function formatPodcastSummary(text) {
+  if (!text) return '';
+  return text.split('\n').filter(function(l) { return l.trim(); }).map(function(line) {
+    var escaped = escapeHtml(line);
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    return '<p>' + escaped + '</p>';
+  }).join('');
+}
+
+function renderPodcastCard(ep) {
+  var domainObj = state.domains.find(function(d) { return d._id === ep.domain; });
+  var domainName = domainObj ? domainObj.name : (ep.domain || '');
+  var icon = DOMAIN_ICONS[ep.domain] || '🎙️';
+  var title = ep.title || ep.title_original || '';
+  var titleOriginal = ep.title_original || ep.title || '';
+  var channel = ep.channel || ep.channelName || '';
+  var duration = ep.duration || ep.durationFormatted || '';
+  var views = ep.views_formatted || ep.viewCountFormatted || '';
+  var thumbnail = ep.thumbnail || '';
+  var youtubeUrl = ep.youtube_url || ep.youtubeUrl || '';
+  var summary = ep.summary_cn || ep.summary || '';
+  var whyListen = ep.why_listen || '';
+  var publishDate = formatPodcastDate(ep.published_at || ep.publishedAt || '');
+
+  return '<article class="podcast-card" data-domain="' + (ep.domain || '') + '">' +
+    '<a href="' + escapeHtml(youtubeUrl) + '" target="_blank" rel="noopener" class="podcast-thumb-link">' +
+    '<div class="podcast-thumb">' +
+    '<img src="' + escapeHtml(thumbnail) + '" alt="' + escapeHtml(title) + '" loading="lazy" onerror="this.style.display=\'none\'">' +
+    '<span class="podcast-domain-badge">' + icon + ' ' + escapeHtml(domainName) + '</span>' +
+    '<span class="podcast-duration-badge">' + escapeHtml(duration) + '</span>' +
+    '<div class="podcast-play-overlay">▶</div>' +
+    '</div>' +
+    '</a>' +
+    '<div class="podcast-body">' +
+    '<div class="podcast-channel">' + escapeHtml(channel) + '</div>' +
+    '<h2 class="podcast-title">' + escapeHtml(title) + '</h2>' +
+    (title !== titleOriginal ? '<div class="podcast-title-orig">' + escapeHtml(titleOriginal) + '</div>' : '') +
+    '<div class="podcast-meta">' +
+    '<span class="podcast-meta-item">👁 ' + escapeHtml(views) + ' 观看</span>' +
+    '<span class="podcast-meta-item">📅 ' + escapeHtml(publishDate) + '</span>' +
+    '</div>' +
+    (whyListen ? '<div class="podcast-why-listen">🎧 ' + escapeHtml(whyListen) + '</div>' : '') +
+    '<div class="podcast-summary">' + formatPodcastSummary(summary) + '</div>' +
+    '<a href="' + escapeHtml(youtubeUrl) + '" target="_blank" rel="noopener" class="podcast-watch-btn">' +
+    '<span>▶</span> 在 YouTube 观看' +
+    '</a>' +
+    '</div>' +
+    '</article>';
+}
+
+function renderPodcast() {
+  var content = document.getElementById('content');
+  if (!state.podcastData || !state.podcastData.articles || state.podcastData.articles.length === 0) {
+    content.innerHTML = '<div class="empty-state"><div class="icon">🎙️</div><div>本周播客推荐正在生成中，请稍后再来</div><div style="font-size:0.8rem;margin-top:8px;opacity:0.6">每周五更新</div></div>';
+    return;
+  }
+  var filtered = filterArticles(state.podcastData.articles);
+  var dateStr = state.podcastData.date ? formatDate(state.podcastData.date) : '';
+  
+  if (filtered.length === 0) {
+    content.innerHTML = (dateStr ? '<div class="date-header">' + dateStr + '</div>' : '') +
+      '<div class="empty-state"><div>该领域暂无播客推荐</div></div>';
+    return;
+  }
+  
+  var html = '<div class="podcast-header">' +
+    '<div class="podcast-header-title">🎙️ Podcast Friday</div>' +
+    '<div class="podcast-header-desc">每周精选 · 全球顶级思想播客 · AI 中文解读</div>' +
+    (dateStr ? '<div class="podcast-header-date">' + dateStr + '</div>' : '') +
+    '</div>';
+  
+  html += '<div class="podcast-grid">';
+  html += filtered.map(renderPodcastCard).join('');
+  html += '</div>';
+  
+  content.innerHTML = html;
+}
+
+async function loadPodcast() {
+  var content = document.getElementById('content');
+  
+  // 先检查缓存
+  var cached = getCached('podcast');
+  if (cached) {
+    state.podcastData = cached;
+    renderPodcast();
+    return;
+  }
+  
+  content.innerHTML = '<div class="loading">加载播客推荐...</div>';
+  state.podcastLoading = true;
+  
+  try {
+    // 尝试从 CloudBase 云函数读取
+    var data = await callFunction('articles-read', { action: 'podcast-latest' });
+    
+    if (data && data.articles && data.articles.length > 0) {
+      state.podcastData = data;
+      if (data.domains && data.domains.length > 0) {
+        state.domains = data.domains;
+        renderDomainFilters(data.domains);
+      }
+      setCache('podcast', data, 600000); // 10 分钟缓存
+      renderPodcast();
+    } else {
+      // Fallback: 从静态 JSON 加载（podcast-friday/frontend/data.json）
+      await loadPodcastFromStatic();
+    }
+  } catch (e) {
+    console.log('CloudBase podcast load failed, trying static:', e.message);
+    await loadPodcastFromStatic();
+  }
+  
+  state.podcastLoading = false;
+}
+
+async function loadPodcastFromStatic() {
+  try {
+    var resp = await fetch('/podcast-friday/data.json');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    
+    // 转换格式以匹配渲染函数
+    state.podcastData = {
+      date: data.weekLabel || '',
+      articles: (data.episodes || []).map(function(ep) {
+        return {
+          domain: ep.domain,
+          title: ep.title,
+          title_original: ep.title,
+          channel: ep.channelName,
+          channelName: ep.channelName,
+          duration: ep.durationFormatted,
+          durationFormatted: ep.durationFormatted,
+          views_formatted: ep.viewCountFormatted,
+          viewCountFormatted: ep.viewCountFormatted,
+          views: ep.viewCount,
+          published_at: ep.publishedAt,
+          publishedAt: ep.publishedAt,
+          thumbnail: ep.thumbnail,
+          summary_cn: ep.summary,
+          summary: ep.summary,
+          why_listen: ep.why_listen || '',
+          youtube_url: ep.youtubeUrl,
+          youtubeUrl: ep.youtubeUrl,
+          video_id: ep.videoId,
+          score: ep.score,
+        };
+      }),
+      total: (data.episodes || []).length,
+    };
+    
+    setCache('podcast', state.podcastData, 600000);
+    renderPodcast();
+  } catch (e) {
+    console.error('Static podcast load failed:', e);
+    document.getElementById('content').innerHTML = 
+      '<div class="error-state"><div>播客数据加载失败</div><div style="font-size:0.75rem;margin-top:8px;opacity:0.6">' + escapeHtml(e.message) + '</div></div>';
+  }
+}
+
 // === Tab 切换 ===
 async function switchTab(tab) {
   state.currentTab = tab;
@@ -396,6 +572,9 @@ async function switchTab(tab) {
   if (tab === 'today') {
     removeSearchBox();
     await loadToday();
+  } else if (tab === 'podcast') {
+    removeSearchBox();
+    await loadPodcast();
   } else {
     renderSearchBox();
     await loadArchive();
@@ -467,6 +646,7 @@ async function init() {
   }
   var hash = window.location.hash.replace('#', '');
   if (hash === 'archive') switchTab('archive');
+  else if (hash === 'podcast') switchTab('podcast');
   else switchTab('today');
 }
 

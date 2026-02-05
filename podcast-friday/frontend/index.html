@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>Podcast Friday — 本周值得听的播客</title>
+  <meta name="description" content="每周五精选 8 集全球顶级思想播客，AI 中文摘要，一目了然。">
+  
+  <!-- OG Tags -->
+  <meta property="og:title" content="Podcast Friday — 本周值得听的播客">
+  <meta property="og:description" content="每周精选 8 集全球顶级思想播客，AI 中文摘要">
+  <meta property="og:type" content="website">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-top">
+        <div class="brand">
+          <span class="brand-icon">🎙️</span>
+          <h1>Podcast Friday</h1>
+        </div>
+        <div class="week-label" id="weekLabel"></div>
+      </div>
+      <p class="tagline">每周精选 · 全球顶级思想播客 · AI 中文摘要</p>
+    </header>
+
+    <!-- Domain Filter -->
+    <nav class="filters" id="filters">
+      <button class="filter-tag active" data-domain="all">全部</button>
+      <button class="filter-tag" data-domain="T">🔧 技术</button>
+      <button class="filter-tag" data-domain="P">🏛️ 政治</button>
+      <button class="filter-tag" data-domain="Φ">🤔 哲学</button>
+      <button class="filter-tag" data-domain="F">💰 金融</button>
+    </nav>
+
+    <!-- Episode Cards -->
+    <main class="episodes" id="episodes">
+      <!-- Loading Skeleton -->
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w60"></div>
+          <div class="skeleton-line w90"></div>
+          <div class="skeleton-line w70"></div>
+        </div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w60"></div>
+          <div class="skeleton-line w90"></div>
+          <div class="skeleton-line w70"></div>
+        </div>
+      </div>
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w60"></div>
+          <div class="skeleton-line w90"></div>
+          <div class="skeleton-line w70"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Error State -->
+    <div class="error-state" id="errorState" style="display:none">
+      <div class="error-icon">📡</div>
+      <p>数据加载失败，请稍后重试</p>
+      <button class="retry-btn" onclick="loadData()">重试</button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-brand">Podcast Friday · by <a href="/" class="mot-link">Mind Our Times</a></div>
+      <div class="footer-meta">数据源：YouTube · 摘要：AI 生成 · 每周五更新</div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -438,6 +438,275 @@ mark {
   }
 }
 
+/* === 播客日样式 === */
+
+/* 播客日 header */
+.podcast-header {
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.podcast-header-title {
+  font-family: var(--font-sans);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.podcast-header-desc {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.podcast-header-date {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--accent);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* 播客卡片容器 */
+.podcast-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 20px;
+}
+
+/* 播客卡片 */
+.podcast-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.podcast-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  .podcast-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+}
+
+/* 封面图链接 */
+.podcast-thumb-link {
+  display: block;
+  text-decoration: none;
+}
+
+/* 封面图 */
+.podcast-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--border-light);
+}
+
+.podcast-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.podcast-card:hover .podcast-thumb img {
+  transform: scale(1.03);
+}
+
+/* 播放按钮覆盖层 */
+.podcast-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  backdrop-filter: blur(4px);
+  padding-left: 3px;
+}
+
+.podcast-card:hover .podcast-play-overlay {
+  opacity: 1;
+}
+
+/* 领域标签（封面左上） */
+.podcast-domain-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(192, 57, 43, 0.9);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(4px);
+}
+
+/* 时长标签（封面右下） */
+.podcast-duration-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+/* 卡片内容区 */
+.podcast-body {
+  padding: 16px 18px 18px;
+}
+
+.podcast-channel {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+
+.podcast-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.podcast-title-orig {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.podcast-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.podcast-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* 为什么值得听 */
+.podcast-why-listen {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  background: var(--tag-bg);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* 摘要 */
+.podcast-summary {
+  font-size: 0.92rem;
+  line-height: 1.85;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.podcast-summary p {
+  margin-bottom: 8px;
+}
+
+.podcast-summary p:last-child {
+  margin-bottom: 0;
+}
+
+.podcast-summary strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* YouTube 按钮 */
+.podcast-watch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.podcast-watch-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* 播客卡片淡入动画 */
+.podcast-card {
+  animation: podcastFadeIn 0.4s ease both;
+}
+
+.podcast-card:nth-child(1) { animation-delay: 0s; }
+.podcast-card:nth-child(2) { animation-delay: 0.06s; }
+.podcast-card:nth-child(3) { animation-delay: 0.12s; }
+.podcast-card:nth-child(4) { animation-delay: 0.18s; }
+.podcast-card:nth-child(5) { animation-delay: 0.24s; }
+.podcast-card:nth-child(6) { animation-delay: 0.3s; }
+.podcast-card:nth-child(7) { animation-delay: 0.36s; }
+.podcast-card:nth-child(8) { animation-delay: 0.42s; }
+
+@keyframes podcastFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tab 样式补充 - 播客日 tab 带 emoji */
+.tab[data-tab="podcast"] {
+  white-space: nowrap;
+}
+
 /* --- 响应式 --- */
 @media (max-width: 480px) {
   :root { --spacing: 16px; }
@@ -448,4 +717,8 @@ mark {
     font-size: 16px; /* 防止 iOS 自动缩放 */
     padding: 11px 40px 11px 40px;
   }
+  .podcast-title { font-size: 1rem; }
+  .podcast-body { padding: 14px 16px 16px; }
+  .podcast-header-title { font-size: 1.2rem; }
+  .podcast-summary { font-size: 0.88rem; }
 }

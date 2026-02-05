@@ -3,7 +3,7 @@
 import json
 import subprocess
 
-date = "2026-02-04"
+date = "2026-02-05"
 input_file = f"/Users/dq/.openclaw/workspace/memory/briefing-index/{date}-full.json"
 
 DOMAIN_MAP = {

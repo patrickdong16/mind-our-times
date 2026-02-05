@@ -1,5 +1,5 @@
 {
-  "envId": "thoughts-rador26-2f3u8ht52110fab",
+  "envId": "mind-our-times-3g7c3va270081e5c",
   "region": "ap-shanghai",
   "functionRoot": "functions",
   "functions": [
@@ -13,6 +13,18 @@
     {
       "name": "articles-read",
       "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main"
+    },
+    {
+      "name": "vote",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main"
+    },
+    {
+      "name": "podcast-write",
+      "timeout": 30,
       "runtime": "Nodejs16.13",
       "handler": "index.main"
     }
