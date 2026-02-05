@@ -288,4 +288,10 @@ window.addEventListener('hashchange', function() {
   if (hash && hash !== state.currentTab) switchTab(hash);
 });
 
+// === 暴露函数到全局作用域（Vite 构建后 onclick 需要） ===
+window.switchTab = switchTab;
+window.toggleDomain = toggleDomain;
+window.toggleArchiveGroup = toggleArchiveGroup;
+window.loadMoreArchive = loadMoreArchive;
+
 document.addEventListener('DOMContentLoaded', init);
