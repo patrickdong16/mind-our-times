@@ -1,0 +1,49 @@
+{
+  "description": "Mind Our Times 公众号选题历史，追踪推荐和选择，学习 DQ 偏好",
+  "created": "2026-02-06",
+  "history": [
+    {
+      "date": "2026-02-05",
+      "type": "daily",
+      "recommendations": [
+        {"rank": 1, "title": "只有一个势力范围", "domain": "政治(P)", "author": "Michael Beckley"},
+        {"rank": 2, "title": "克鲁格曼关税分析", "domain": "金融(F)", "author": "Paul Krugman"},
+        {"rank": 3, "title": "AI时代人类身份", "domain": "技术(T)", "author": "Freya India"}
+      ],
+      "selected": 1,
+      "selected_title": "只有一个势力范围",
+      "selected_domain": "政治(P)"
+    },
+    {
+      "date": "2026-02-06",
+      "type": "podcast",
+      "recommendations": [
+        {"rank": 1, "title": "规模法则的终结？", "domain": "技术(T)", "source": "Lex Fridman"},
+        {"rank": 2, "title": "AI智能体时代", "domain": "技术(T)", "source": "Lex Fridman"},
+        {"rank": 3, "title": "比特币新叙事", "domain": "金融(F)", "source": "ARK Invest"}
+      ],
+      "selected": "1+2",
+      "selected_title": "规模法则+AI智能体合并长文",
+      "selected_domain": "技术(T)",
+      "vote_question": "AI时代，你更担心哪个？",
+      "vote_option_a": "AI直接干掉你 — 有一天发现自己的工作被算法自动完成了，公司根本不需要这个岗位了",
+      "vote_option_b": "隔壁工位干掉你 — 有一天发现同事用AI干活又快又好，老板觉得一个人能顶三个，你成了多余的那个",
+      "vote_domain": "T",
+      "notes": "DQ要求选题分散、投票问题轻松有趣、长文纽约客风格"
+    }
+  ],
+  "domain_stats": {
+    "政治(P)": 1,
+    "技术(T)": 1,
+    "金融(F)": 0,
+    "哲学(Φ)": 0,
+    "历史(H)": 0,
+    "文化(R)": 0
+  },
+  "preferences_learned": [
+    "选题要分散，不要连续两天同类型",
+    "投票问题要轻松有趣，普通人秒懂",
+    "长文风格要纽约客：幽默辛辣一针见血",
+    "周五是播客日，选题从播客中来"
+  ]
+}

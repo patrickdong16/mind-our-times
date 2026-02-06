@@ -102,7 +102,7 @@ def main():
     date = sys.argv[1]
     
     # 读取思想雷达输出
-    input_file = f"/Users/dq/.openclaw/workspace/memory/briefing-index/{date}-full.json"
+    input_file = f"./memory/briefing-index/{date}-full.json"
     try:
         with open(input_file, "r", encoding="utf-8") as f:
             radar_data = json.load(f)

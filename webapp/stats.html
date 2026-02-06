@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Stats - Mind Our Times</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    #stats { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div id="stats">Loading...</div>
+  
+  <script type="module">
+    import cloudbase from 'https://esm.sh/@cloudbase/js-sdk@2.25.4';
+    
+    const ENV_ID = 'mind-our-times-3g7c3va270081e5c';
+    const app = cloudbase.init({ env: ENV_ID });
+    
+    async function loadStats() {
+      try {
+        await app.auth({ persistence: 'local' }).signInAnonymously();
+        
+        const result = await app.callFunction({
+          name: 'vote',
+          data: { action: 'stats' }
+        });
+        
+        if (result.result && result.result.success) {
+          document.getElementById('stats').textContent = JSON.stringify(result.result.data, null, 2);
+        } else {
+          document.getElementById('stats').textContent = 'Error: ' + (result.result?.error || 'Unknown');
+        }
+      } catch (e) {
+        document.getElementById('stats').textContent = 'Error: ' + e.message;
+      }
+    }
+    
+    loadStats();
+  </script>
+</body>
+</html>

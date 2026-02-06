@@ -1,8 +1,20 @@
 # Mind Our Times — 技术设计文档 (TDD)
 
-> **版本**：v1.0  
-> **日期**：2026-02-04  
-> **对应需求**：REQUIREMENTS.md v1.0
+> **版本**：v1.6  
+> **日期**：2026-02-06  
+> **对应需求**：REQUIREMENTS.md v1.6
+
+### 更新日志
+
+| 版本 | 日期 | 变更 |
+|------|------|------|
+| v1.6 | 2026-02-06 | **首发完成**：vote云函数上线、H5投票页（纽约客风格）、选题追踪数据库（topic-history.json） |
+| v1.5 | 2026-02-06 | 投票问题设计规范（内核固定+形式轻松）、周五播客日运营规则（不生成RSS内容） |
+| v1.4 | 2026-02-06 | 投票系统（H5页面+云函数）、选题结构化推荐、月度趋势报告 |
+| v1.3 | 2026-02-06 | 短分析格式固化、thumbnail 字段（og:image 抓取）、图文卡片展示 |
+| v1.2 | 2026-02-06 | 播客内容增强（intro+双语金句）、自动刷新机制、podcast-write 函数更新 |
+| v1.1 | 2026-02-05 | 播客日功能、youtube-transcript-api 集成 |
+| v1.0 | 2026-02-04 | 初版 |
 
 ---
 
@@ -82,25 +94,36 @@ CloudBase 云数据库是文档型数据库（类 MongoDB）。
 
 **索引**：`sort_order`（排序用）
 
-### 2.2 集合：`daily_articles`
+### 2.2 集合：`daily_articles`（v1.3 增强）
 
-每日短分析，每条一个文档。
+每日短分析，每条一个文档。**以 2026-02-04 为质量基准。**
 
 ```json
 {
   "_id": "2026-02-04_T_001",
   "date": "2026-02-04",
   "domain": "T",
-  "title": "GPT-5 定价策略的阶层含义",
-  "author_name": "Sam Altman",
-  "author_intro": "OpenAI CEO，全球 AI 竞赛的核心推动者",
-  "source": "2026年2月3日 · OpenAI Blog",
-  "source_url": "https://openai.com/blog/gpt-5",
-  "content": "正文 300-400 字...",
-  "insight": "当技术的价格标签开始决定谁能思考、谁不能思考，我们离赛博朋克还有多远？",
+  "title": "掠食性霸权：特朗普如何挥舞美国权力",
+  "author_name": "Stephen M. Walt",
+  "author_intro": "哈佛大学肯尼迪学院国际关系讲席教授，当代国际关系现实主义学派最具影响力的学者之一",
+  "source": "Foreign Affairs",
+  "source_date": "2026-02-03",
+  "source_url": "https://www.foreignaffairs.com/united-states/predatory-hegemon-walt",
+  "thumbnail": "https://cdn.foreignaffairs.com/images/articles/2026/02/03/predatory-hegemon.jpg",
+  "content": "摘要 300-400 字（背景+核心论点+关键数据，自然分段无小标题）...",
+  "detail": "深度分析 500-700 字（分析框架、历史纵深、投资启示）...",
+  "insight": "💭 题外话：100-200 字的时代洞察...",
   "created_at": "2026-02-04T06:00:00Z"
 }
 ```
+
+**字段说明（v1.3）：**
+| 字段 | 说明 |
+|------|------|
+| thumbnail | 原文 og:image URL，用于图文卡片展示 |
+| content | 摘要（300-400字），webapp 直接展示 |
+| detail | 深度分析（500-700字），供详版/公众号使用 |
+| source_date | 原文发布日期（YYYY-MM-DD） |
 
 **索引**：
 - `date`（按日期查询，最核心）
@@ -253,6 +276,74 @@ GET /vote?action=trend&domain=T&days=90
 → [{ date: "2026-02-04", yes_pct: 62, total: 234 }, ...]
 ```
 
+### 3.5 podcast-write（v1.1 新增）
+
+**触发方式**：tcb fn invoke（Pepper 调用）  
+**认证**：CloudBase 服务端凭证
+
+```
+POST /podcast-write
+Body: {
+  date: "2026-02-06",
+  articles: [
+    {
+      video_id: "EV7WhVT270Q",
+      title: "中文标题",
+      title_original: "English Title",
+      channel: "频道名",
+      duration: "1小时30分钟",
+      duration_minutes: 90,
+      views: 423664,
+      views_formatted: "424K",
+      published_at: "2026-01-31T00:06:51Z",
+      thumbnail: "https://...",
+      intro: "开篇导语（80-120字）...",        // v1.2 新增
+      summary_cn: "深度摘要（600-800字）...",
+      why_listen: "一句话推荐...",
+      key_quotes: [                           // v1.2 格式变更：中英双语
+        { en: "English quote", cn: "中文翻译" }
+      ],
+      guest_bio: "嘉宾介绍（150-200字）...",
+      domain: "T",
+      focus: "深度访谈",
+      youtube_url: "https://youtube.com/watch?v=...",
+      score: 7.5,
+      like_count: 10110
+    }
+  ]
+}
+```
+
+**行为**：
+1. 幂等：先删除该日期旧数据
+2. 批量写入 `podcast_articles` 集合
+3. 自动添加 `_id`（格式：`podcast_YYYY-MM-DD_001`）和 `created_at`
+
+### 3.6 articles-read 扩展（v1.1）
+
+**播客相关 actions：**
+
+```
+GET /articles-read?action=today
+→ 周五时自动返回 podcast_articles 数据（contentType: "podcast"）
+
+GET /articles-read?action=podcast-latest
+→ 返回最新一期播客数据（按 created_at 排序）
+```
+
+**today 响应（周五）：**
+```json
+{
+  "date": "2026-02-06",
+  "contentType": "podcast",
+  "articles": [
+    { "intro": "...", "summary_cn": "...", "key_quotes": [...], ... }
+  ],
+  "domains": [...],
+  "total": 8
+}
+```
+
 ---
 
 ## 四、Webapp 技术方案
@@ -313,6 +404,73 @@ GET /vote?action=trend&domain=T&days=90
 - 静态资源：强缓存 + 版本号破缓存
 - 领域配置：缓存 24 小时（极少变化）
 
+### 4.5 自动刷新机制（v1.2 新增）
+
+**目的**：用户长时间停留在页面时自动获取最新内容，避免看到旧数据
+
+**实现方案**：
+
+```javascript
+// 配置
+const CONFIG = {
+  autoRefreshInterval: 5 * 60 * 1000  // 5分钟
+};
+
+// 启动自动刷新
+function startAutoRefresh() {
+  setInterval(() => {
+    // 仅当页面可见且在"今日"Tab 时刷新
+    if (document.visibilityState === 'visible' && state.currentTab === 'today') {
+      silentRefresh();
+    }
+  }, CONFIG.autoRefreshInterval);
+  
+  // 页面重新可见时立即刷新
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.currentTab === 'today') {
+      silentRefresh();
+    }
+  });
+}
+
+// 静默刷新
+async function silentRefresh() {
+  // 1. 清除缓存
+  delete cache['today'];
+  delete cache['podcast'];
+  
+  // 2. 请求最新数据
+  const data = await callFunction('articles-read', { action: 'today' });
+  
+  // 3. 检测是否有更新（比较日期或文章数量）
+  if (hasChanges(state.todayData, data)) {
+    state.todayData = data;
+    renderToday();
+    showRefreshToast('内容已更新');  // Toast 提示
+  }
+}
+```
+
+**Toast 样式**：
+
+```css
+.refresh-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+.refresh-toast.show { opacity: 1; }
+```
+
 ---
 
 ## 五、Pepper 脚本设计
@@ -361,7 +519,50 @@ def publish(articles, date):
         raise Exception(f"❌ Publish failed: {resp.text}")
 ```
 
-### 5.3 配置文件 (pepper/config.json)
+### 5.3 thumbnail 抓取（v1.3 新增）
+
+**目的**：为每篇文章抓取原文配图，用于 webapp 图文卡片和公众号文章
+
+**抓取逻辑**：
+```python
+import urllib.request
+import re
+
+def fetch_og_image(url):
+    """从 URL 抓取 og:image"""
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (compatible; Pepper/1.0)'
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            html = resp.read().decode('utf-8', errors='ignore')[:50000]
+            
+            # 优先级 1: og:image
+            match = re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', html)
+            if not match:
+                match = re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']', html)
+            if match:
+                return match.group(1)
+            
+            # 优先级 2: twitter:image
+            match = re.search(r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']', html)
+            if match:
+                return match.group(1)
+            
+            return ""
+    except:
+        return ""
+```
+
+**集成到 cron 流程**：
+1. AI 分析生成完 8-12 条文章后
+2. 遍历每条，调用 `fetch_og_image(source_url)`
+3. 将结果存入 `thumbnail` 字段
+4. 抓取失败（超时/无图）时 thumbnail = ""，前端 graceful fallback
+
+**脚本位置**：`scripts/fetch-og-image.py`（独立模块，供 cron agent 调用）
+
+### 5.4 配置文件 (pepper/config.json)
 
 沿用现有 `CONTENT_SOURCES.json` 格式，增加领域映射：
 

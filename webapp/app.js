@@ -12,7 +12,8 @@ const CONFIG = {
   siteDesc: '追踪时代思想脉搏',
   cacheToday: 5 * 60 * 1000,
   cacheArchive: 60 * 60 * 1000,
-  cacheDomains: 24 * 60 * 60 * 1000
+  cacheDomains: 24 * 60 * 60 * 1000,
+  autoRefreshInterval: 5 * 60 * 1000,  // 自动刷新间隔：5分钟
 }
 
 // === CloudBase 初始化 ===
@@ -341,7 +342,7 @@ function renderArticleCard(article) {
 
 function renderToday() {
   var content = document.getElementById('content');
-  if (!state.todayData || !state.todayData.articles.length) {
+  if (!state.todayData || !state.todayData.articles || state.todayData.articles.length === 0) {
     content.innerHTML = '<div class="empty-state"><div class="icon">🔭</div><div>今日内容正在生成中，请稍后再来</div></div>';
     return;
   }
@@ -351,6 +352,20 @@ function renderToday() {
     content.innerHTML = '<div class="date-header">' + dateStr + '</div><div class="empty-state"><div>该领域今日暂无内容</div></div>';
     return;
   }
+  
+  // 周五播客日：使用播客卡片样式
+  if (state.todayData.contentType === 'podcast') {
+    var html = '<div class="podcast-header">' +
+      '<div class="podcast-header-title">🎙️ Podcast Friday</div>' +
+      '<div class="podcast-header-desc">每周精选 · 全球顶级思想播客 · AI 中文解读</div>' +
+      '<div class="podcast-header-date">' + dateStr + '</div>' +
+      '</div>';
+    html += '<div class="podcast-grid">' + filtered.map(renderPodcastCard).join('') + '</div>';
+    content.innerHTML = html;
+    return;
+  }
+  
+  // 普通文章
   content.innerHTML = '<div class="date-header">' + dateStr + '</div>' + filtered.map(renderArticleCard).join('');
 }
 
@@ -410,6 +425,29 @@ function formatPodcastSummary(text) {
   }).join('');
 }
 
+function formatKeyQuotes(quotes) {
+  // 支持新格式（数组对象 {en, cn}）和旧格式（字符串数组）
+  if (!quotes || !Array.isArray(quotes) || quotes.length === 0) return '';
+  
+  var html = '<div class="podcast-quotes">';
+  quotes.forEach(function(q) {
+    if (typeof q === 'object' && q.en) {
+      // 新格式：中英双语
+      html += '<blockquote class="podcast-quote">';
+      html += '<p class="quote-en">"' + escapeHtml(q.en) + '"</p>';
+      if (q.cn) {
+        html += '<p class="quote-cn">' + escapeHtml(q.cn) + '</p>';
+      }
+      html += '</blockquote>';
+    } else if (typeof q === 'string') {
+      // 旧格式：纯字符串
+      html += '<blockquote class="podcast-quote"><p>' + escapeHtml(q) + '</p></blockquote>';
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
 function renderPodcastCard(ep) {
   var domainObj = state.domains.find(function(d) { return d._id === ep.domain; });
   var domainName = domainObj ? domainObj.name : (ep.domain || '');
@@ -421,8 +459,12 @@ function renderPodcastCard(ep) {
   var views = ep.views_formatted || ep.viewCountFormatted || '';
   var thumbnail = ep.thumbnail || '';
   var youtubeUrl = ep.youtube_url || ep.youtubeUrl || '';
+  
+  // 新格式：intro（开篇导语）+ summary_cn（核心内容）+ guest_bio（嘉宾介绍）
+  var intro = ep.intro || '';  // 融合标题主题 + 为什么值得听 + 发布时间
   var summary = ep.summary_cn || ep.summary || '';
-  var whyListen = ep.why_listen || '';
+  var guestBio = ep.guest_bio || '';
+  var keyQuotes = ep.key_quotes || [];
   var publishDate = formatPodcastDate(ep.published_at || ep.publishedAt || '');
 
   return '<article class="podcast-card" data-domain="' + (ep.domain || '') + '">' +
@@ -442,8 +484,14 @@ function renderPodcastCard(ep) {
     '<span class="podcast-meta-item">👁 ' + escapeHtml(views) + ' 观看</span>' +
     '<span class="podcast-meta-item">📅 ' + escapeHtml(publishDate) + '</span>' +
     '</div>' +
-    (whyListen ? '<div class="podcast-why-listen">🎧 ' + escapeHtml(whyListen) + '</div>' : '') +
+    // 开篇导语（融合标题+为什么值得听+时间）
+    (intro ? '<div class="podcast-intro">' + formatPodcastSummary(intro) + '</div>' : '') +
+    // 嘉宾介绍
+    (guestBio ? '<div class="podcast-guest-bio">' + formatPodcastSummary(guestBio) + '</div>' : '') +
+    // 核心内容
     '<div class="podcast-summary">' + formatPodcastSummary(summary) + '</div>' +
+    // 金句（中英双语）
+    formatKeyQuotes(keyQuotes) +
     '<a href="' + escapeHtml(youtubeUrl) + '" target="_blank" rel="noopener" class="podcast-watch-btn">' +
     '<span>▶</span> 在 YouTube 观看' +
     '</a>' +
@@ -572,9 +620,6 @@ async function switchTab(tab) {
   if (tab === 'today') {
     removeSearchBox();
     await loadToday();
-  } else if (tab === 'podcast') {
-    removeSearchBox();
-    await loadPodcast();
   } else {
     renderSearchBox();
     await loadArchive();
@@ -646,8 +691,79 @@ async function init() {
   }
   var hash = window.location.hash.replace('#', '');
   if (hash === 'archive') switchTab('archive');
-  else if (hash === 'podcast') switchTab('podcast');
   else switchTab('today');
+  
+  // 自动刷新：每5分钟检查更新（仅当页面可见时）
+  startAutoRefresh();
+}
+
+// === 自动刷新逻辑 ===
+var autoRefreshTimer = null;
+
+function startAutoRefresh() {
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  
+  autoRefreshTimer = setInterval(function() {
+    // 仅当页面可见且在"今日"标签时刷新
+    if (document.visibilityState === 'visible' && state.currentTab === 'today') {
+      console.log('[Auto-refresh] Checking for updates...');
+      silentRefresh();
+    }
+  }, CONFIG.autoRefreshInterval);
+  
+  // 页面重新可见时立即刷新
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && state.currentTab === 'today') {
+      silentRefresh();
+    }
+  });
+}
+
+async function silentRefresh() {
+  try {
+    // 清除缓存
+    delete cache['today'];
+    delete cache['podcast'];
+    
+    // 静默重新加载
+    var data = await callFunction('articles-read', { action: 'today' });
+    
+    // 检查是否有更新（比较日期或文章数量）
+    var oldDate = state.todayData ? state.todayData.date : null;
+    var newDate = data.date;
+    var oldCount = state.todayData ? (state.todayData.articles || []).length : 0;
+    var newCount = (data.articles || []).length;
+    
+    if (oldDate !== newDate || oldCount !== newCount) {
+      console.log('[Auto-refresh] New content detected, refreshing...');
+      state.todayData = data;
+      setCache('today', data, CONFIG.cacheToday);
+      renderToday();
+      
+      // 显示更新提示
+      showRefreshToast('内容已更新');
+    }
+  } catch (e) {
+    console.log('[Auto-refresh] Error:', e.message);
+  }
+}
+
+function showRefreshToast(message) {
+  var toast = document.createElement('div');
+  toast.className = 'refresh-toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(function() {
+    toast.classList.add('show');
+  }, 10);
+  
+  setTimeout(function() {
+    toast.classList.remove('show');
+    setTimeout(function() {
+      toast.remove();
+    }, 300);
+  }, 2000);
 }
 
 window.addEventListener('hashchange', function() {
@@ -664,3 +780,80 @@ window.clearSearch = clearSearch;
 window.performSearch = performSearch;
 
 document.addEventListener('DOMContentLoaded', init);
+
+// === Pull to Refresh ===
+(function initPullToRefresh() {
+  var pullIndicator = document.getElementById('pullIndicator');
+  var container = document.querySelector('.container');
+  var content = document.getElementById('content');
+  
+  if (!pullIndicator || !container) return;
+  
+  var startY = 0;
+  var pulling = false;
+  var threshold = 80;
+  
+  content.addEventListener('touchstart', function(e) {
+    if (window.scrollY === 0) {
+      startY = e.touches[0].pageY;
+      pulling = true;
+    }
+  }, { passive: true });
+  
+  content.addEventListener('touchmove', function(e) {
+    if (!pulling) return;
+    
+    var currentY = e.touches[0].pageY;
+    var diff = currentY - startY;
+    
+    if (diff > 0 && window.scrollY === 0) {
+      var pullDistance = Math.min(diff * 0.5, threshold);
+      container.style.transform = 'translateY(' + pullDistance + 'px)';
+      
+      if (pullDistance >= threshold * 0.8) {
+        pullIndicator.classList.add('visible');
+        pullIndicator.querySelector('.pull-text').textContent = '释放刷新';
+      } else if (pullDistance > 20) {
+        pullIndicator.classList.add('visible');
+        pullIndicator.querySelector('.pull-text').textContent = '下拉刷新';
+      }
+    }
+  }, { passive: true });
+  
+  content.addEventListener('touchend', async function(e) {
+    if (!pulling) return;
+    pulling = false;
+    
+    var transform = container.style.transform;
+    var match = transform.match(/translateY\((\d+)px\)/);
+    var distance = match ? parseInt(match[1]) : 0;
+    
+    container.style.transform = '';
+    
+    if (distance >= threshold * 0.8) {
+      // Trigger refresh
+      pullIndicator.classList.add('visible', 'refreshing');
+      pullIndicator.querySelector('.pull-text').textContent = '刷新中...';
+      
+      try {
+        // Clear cache and reload
+        localStorage.removeItem('mot_cache_today');
+        localStorage.removeItem('mot_cache_podcast');
+        
+        if (state.currentTab === 'today') {
+          await loadToday();
+        } else if (state.currentTab === 'archive') {
+          await loadArchive();
+        }
+      } catch (e) {
+        console.error('Refresh failed:', e);
+      }
+      
+      setTimeout(function() {
+        pullIndicator.classList.remove('visible', 'refreshing');
+      }, 500);
+    } else {
+      pullIndicator.classList.remove('visible');
+    }
+  }, { passive: true });
+})();

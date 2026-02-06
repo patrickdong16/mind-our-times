@@ -1,32 +1,42 @@
 {
   "envId": "mind-our-times-3g7c3va270081e5c",
-  "region": "ap-shanghai",
   "functionRoot": "functions",
   "functions": [
     {
-      "name": "articles-write",
-      "timeout": 30,
-      "runtime": "Nodejs16.13",
-      "handler": "index.main",
-      "envVariables": {}
-    },
-    {
       "name": "articles-read",
-      "timeout": 10,
-      "runtime": "Nodejs16.13",
-      "handler": "index.main"
+      "config": {
+        "runtime": "Nodejs16.13",
+        "handler": "index.main",
+        "timeout": 15,
+        "installDependency": true
+      }
     },
     {
-      "name": "vote",
-      "timeout": 10,
-      "runtime": "Nodejs16.13",
-      "handler": "index.main"
+      "name": "articles-write",
+      "config": {
+        "runtime": "Nodejs16.13",
+        "handler": "index.main",
+        "timeout": 30,
+        "installDependency": true
+      }
     },
     {
       "name": "podcast-write",
-      "timeout": 30,
-      "runtime": "Nodejs16.13",
-      "handler": "index.main"
+      "config": {
+        "runtime": "Nodejs16.13",
+        "handler": "index.main",
+        "timeout": 30,
+        "installDependency": true
+      }
+    },
+    {
+      "name": "vote",
+      "config": {
+        "runtime": "Nodejs16.13",
+        "handler": "index.main",
+        "timeout": 15,
+        "installDependency": true
+      }
     }
   ]
 }

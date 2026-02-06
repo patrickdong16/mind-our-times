@@ -12,7 +12,7 @@ def main():
         sys.exit(1)
     
     date = sys.argv[1]
-    input_file = f"/Users/dq/.openclaw/workspace/memory/briefing-index/{date}-full.json"
+    input_file = f"./memory/briefing-index/{date}-full.json"
     
     # 领域映射
     DOMAIN_MAP = {

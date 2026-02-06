@@ -1,0 +1,190 @@
+/* 投票页面样式 - New Yorker 风格 */
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.content {
+  padding: 60rpx 40rpx;
+}
+
+/* 头部 */
+.header {
+  text-align: center;
+  margin-bottom: 60rpx;
+  padding-bottom: 40rpx;
+  border-bottom: 1rpx solid #e5e5e5;
+}
+
+.brand {
+  display: block;
+  font-size: 22rpx;
+  letter-spacing: 0.2em;
+  color: #999;
+  margin-bottom: 12rpx;
+}
+
+.subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #555;
+  font-style: italic;
+}
+
+/* 问题 */
+.question {
+  font-size: 44rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  margin-bottom: 60rpx;
+  color: #1a1a1a;
+}
+
+/* 已投票提示 */
+.voted-hint {
+  text-align: center;
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 30rpx;
+}
+
+/* 选项 */
+.options {
+  margin-bottom: 50rpx;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 36rpx 40rpx;
+  margin-bottom: 24rpx;
+  background: #fff;
+  border: 1rpx solid #e5e5e5;
+  border-radius: 8rpx;
+  font-size: 30rpx;
+  color: #1a1a1a;
+  text-align: left;
+  line-height: 1.6;
+  transition: all 0.2s;
+}
+
+.option::after {
+  border: none;
+}
+
+.option:active:not(.disabled) {
+  transform: scale(0.98);
+  background: #f5f5f5;
+}
+
+.option.selected {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+
+.option.disabled {
+  opacity: 0.9;
+}
+
+.option-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  opacity: 0.5;
+  margin-bottom: 8rpx;
+}
+
+.option.selected .option-label {
+  opacity: 0.7;
+}
+
+.option-title {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.option-desc {
+  font-size: 26rpx;
+  opacity: 0.7;
+  margin-top: 8rpx;
+  line-height: 1.5;
+}
+
+/* 结果 */
+.result {
+  padding-top: 40rpx;
+  border-top: 1rpx solid #e5e5e5;
+}
+
+.result-item {
+  margin-bottom: 36rpx;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12rpx;
+}
+
+.result-label {
+  font-size: 28rpx;
+  color: #555;
+}
+
+.result-pct {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.result-bar {
+  width: 100%;
+  height: 8rpx;
+  background: #e5e5e5;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.result-bar-fill {
+  height: 100%;
+  border-radius: 4rpx;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-a {
+  background: #1a1a1a;
+}
+
+.bar-b {
+  background: #888;
+}
+
+.result-total {
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 30rpx;
+}
+
+/* 底部 */
+.footer {
+  text-align: center;
+  margin-top: 60rpx;
+  padding-top: 40rpx;
+  border-top: 1rpx solid #e5e5e5;
+}
+
+.tagline {
+  font-size: 22rpx;
+  color: #999;
+  letter-spacing: 0.1em;
+}

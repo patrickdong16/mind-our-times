@@ -1,0 +1,12 @@
+{
+  "envId": "mind-our-times-3g7c3va270081e5c",
+  "functionRoot": ".",
+  "functions": [
+    {
+      "name": "articles-write",
+      "timeout": 30,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main"
+    }
+  ]
+}

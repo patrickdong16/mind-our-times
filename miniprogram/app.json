@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "pages/vote/vote"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#1a1a1a",
+    "navigationBarTitleText": "今日之问",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#fafafa"
+  },
+  "sitemapLocation": "sitemap.json",
+  "cloud": true
+}

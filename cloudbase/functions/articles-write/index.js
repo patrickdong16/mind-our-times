@@ -131,8 +131,10 @@ exports.main = async (event) => {
       source: article.source,
       source_date: article.source_date || '',
       source_url: article.source_url,
-      content: article.content,
-      insight: article.insight,
+      thumbnail: article.thumbnail || '',      // v1.3: og:image 配图
+      content: article.content,                // 摘要 300-400字
+      detail: article.detail || '',            // v1.3: 深度分析 500-700字
+      insight: article.insight,                // 题外话 100-200字
       created_at: now
     }));
     

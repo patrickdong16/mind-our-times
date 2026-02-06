@@ -6,314 +6,304 @@
   <title>今日之问 — Mind Our Times</title>
   <meta name="description" content="参与投票，表达你对时代问题的看法">
 
-  <!-- OG Tags -->
-  <meta property="og:title" content="今日之问 — Mind Our Times">
-  <meta property="og:description" content="参与投票，表达你对时代问题的看法">
-  <meta property="og:type" content="website">
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
-
   <style>
-    /* === 变量 === */
     :root {
-      --bg: #fafaf8;
-      --bg-card: #ffffff;
+      --bg: #fafafa;
+      --card-bg: #ffffff;
       --text: #1a1a1a;
-      --text-secondary: #4a4a4a;
-      --text-muted: #8a8a8a;
-      --accent: #c0392b;
-      --accent-light: #e74c3c;
-      --border: #e8e8e8;
-      --border-light: #f0f0f0;
-      --yes-color: #2d7d46;
-      --yes-bg: #e8f5ec;
-      --no-color: #b44a3e;
-      --no-bg: #fce8e6;
-      --font-serif: 'Noto Serif SC', 'Playfair Display', Georgia, serif;
-      --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
-      --max-width: 480px;
+      --text-secondary: #555555;
+      --text-muted: #999999;
+      --border: #e5e5e5;
+      --accent: #1a1a1a;
+      --option-hover: #f5f5f5;
+      --bar-a: #333333;
+      --bar-b: #888888;
     }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #141414;
-        --bg-card: #1e1e1e;
-        --text: #e4e4e4;
-        --text-secondary: #b0b0b0;
-        --text-muted: #707070;
-        --accent: #e05a4a;
-        --border: #2a2a2a;
-        --border-light: #222222;
-        --yes-color: #4caf50;
-        --yes-bg: #1b3a1f;
-        --no-color: #ef5350;
-        --no-bg: #3a1b1b;
-      }
-    }
-
-    /* === 全局 === */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+    
+    html { 
+      font-size: 16px; 
+      -webkit-text-size-adjust: 100%; 
+    }
+    
     body {
-      font-family: var(--font-serif);
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Serif SC', Georgia, serif;
+      min-height: 100vh;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.8;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      padding: 40px 20px;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* === 投票卡片 === */
-    .vote-container {
+    .container {
       width: 100%;
-      max-width: var(--max-width);
+      max-width: 480px;
     }
 
-    .vote-header {
+    /* 头部 */
+    .header {
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .vote-header .brand {
-      font-family: 'Playfair Display', var(--font-serif);
+    .header .brand {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .header .title {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* 问题 */
+    .question {
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.4;
+      text-align: center;
+      margin-bottom: 40px;
+      letter-spacing: -0.01em;
+    }
+
+    /* 已投票状态 */
+    .voted-status {
+      text-align: center;
       font-size: 0.85rem;
       color: var(--text-muted);
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
+      margin-bottom: 20px;
+      display: none;
     }
 
-    .vote-header .label {
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--accent);
-      font-weight: 600;
+    .voted-status.show {
+      display: block;
     }
 
-    .vote-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px 24px;
-      text-align: center;
-    }
-
-    .vote-domain {
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--accent);
-      margin-bottom: 16px;
-    }
-
-    .vote-question {
-      font-size: 1.3rem;
-      font-weight: 600;
-      line-height: 1.5;
-      margin-bottom: 32px;
-      color: var(--text);
-    }
-
-    /* === 投票按钮 === */
-    .vote-buttons {
+    /* 选项 */
+    .options {
       display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 32px;
     }
 
-    .vote-btn {
-      flex: 1;
-      font-family: var(--font-sans);
+    .option {
+      width: 100%;
+      padding: 20px 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
       font-size: 0.95rem;
-      font-weight: 600;
-      padding: 16px 12px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg);
-      color: var(--text-secondary);
+      line-height: 1.6;
+      color: var(--text);
+      text-align: left;
       cursor: pointer;
       transition: all 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-      overflow: hidden;
+      font-family: inherit;
     }
 
-    .vote-btn:active {
-      transform: scale(0.97);
+    .option:hover:not(:disabled) {
+      background: var(--option-hover);
+      border-color: var(--text-muted);
     }
 
-    .vote-btn.yes:hover, .vote-btn.yes:focus {
-      border-color: var(--yes-color);
-      color: var(--yes-color);
-      background: var(--yes-bg);
+    .option:active:not(:disabled) {
+      transform: scale(0.99);
     }
 
-    .vote-btn.no:hover, .vote-btn.no:focus {
-      border-color: var(--no-color);
-      color: var(--no-color);
-      background: var(--no-bg);
-    }
-
-    .vote-btn.selected {
-      transform: scale(0.97);
-    }
-
-    .vote-btn.yes.selected {
-      border-color: var(--yes-color);
-      color: var(--yes-color);
-      background: var(--yes-bg);
-      font-weight: 700;
-    }
-
-    .vote-btn.no.selected {
-      border-color: var(--no-color);
-      color: var(--no-color);
-      background: var(--no-bg);
-      font-weight: 700;
-    }
-
-    .vote-btn:disabled {
+    .option:disabled {
       cursor: default;
+    }
+
+    .option.selected {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .option-label {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-right: 10px;
+      opacity: 0.6;
+    }
+
+    .option.selected .option-label {
+      opacity: 0.8;
+    }
+
+    .option-text {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .option.selected .option-text {
       opacity: 0.85;
     }
 
-    /* === 投票结果 === */
-    .vote-result {
+    /* 投票结果 */
+    .result {
       display: none;
-      margin-top: 8px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
     }
 
-    .vote-result.show { display: block; }
+    .result.show {
+      display: block;
+    }
 
-    .result-bar-wrap {
-      margin-bottom: 16px;
+    .result-item {
+      margin-bottom: 20px;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
     }
 
     .result-label {
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--font-sans);
-      font-size: 0.82rem;
-      margin-bottom: 6px;
+      font-size: 0.85rem;
       color: var(--text-secondary);
     }
 
-    .result-label .pct {
+    .result-pct {
+      font-size: 1.1rem;
       font-weight: 600;
+      color: var(--text);
     }
 
     .result-bar {
       width: 100%;
-      height: 8px;
-      background: var(--border-light);
-      border-radius: 4px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
       overflow: hidden;
     }
 
     .result-bar-fill {
       height: 100%;
-      border-radius: 4px;
-      transition: width 0.8s ease;
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .result-bar-fill.yes { background: var(--yes-color); }
-    .result-bar-fill.no { background: var(--no-color); }
+    .result-bar-fill.bar-a { background: var(--bar-a); }
+    .result-bar-fill.bar-b { background: var(--bar-b); }
 
     .result-total {
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      margin-top: 16px;
-    }
-
-    /* === 底部 === */
-    .vote-footer {
       text-align: center;
-      margin-top: 28px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 24px;
     }
 
-    .vote-footer a {
-      font-family: var(--font-sans);
-      font-size: 0.82rem;
-      color: var(--accent);
+    /* 底部 */
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer a {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
       text-decoration: none;
     }
 
-    .vote-footer a:hover { text-decoration: underline; }
-
-    .vote-footer .tagline {
-      font-family: var(--font-sans);
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 6px;
+    .footer a:hover {
+      color: var(--text);
     }
 
-    /* === 加载状态 === */
-    .vote-loading {
+    .footer .tagline {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+      letter-spacing: 0.1em;
+    }
+
+    /* 加载和错误 */
+    .loading {
       text-align: center;
       padding: 60px 20px;
       color: var(--text-muted);
-      font-family: var(--font-sans);
-      font-size: 0.85rem;
     }
 
-    .vote-error {
+    .error {
       text-align: center;
       padding: 40px 20px;
-      color: var(--accent);
-      font-family: var(--font-sans);
-      font-size: 0.85rem;
+      color: var(--text-secondary);
     }
 
-    /* === 动画 === */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* 成功提示 */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--text);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      z-index: 1000;
+      transition: transform 0.3s ease;
     }
 
-    .vote-card { animation: fadeIn 0.4s ease; }
-    .vote-result.show { animation: fadeIn 0.3s ease; }
-
-    /* === 已投票状态提示 === */
-    .vote-status {
-      font-family: var(--font-sans);
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-      display: none;
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
     }
-
-    .vote-status.show { display: block; }
   </style>
 </head>
 <body>
-  <div class="vote-container" id="voteContainer">
-    <div class="vote-loading" id="voteLoading">加载中...</div>
+  <div class="container" id="container">
+    <div class="loading" id="loading">加载中...</div>
   </div>
 
-  <script type="module">
-    import cloudbase from 'https://unpkg.com/@cloudbase/js-sdk@2.25.4/dist/index.esm.js'
+  <div class="toast" id="toast">✓ 投票成功</div>
 
-    // === 配置 ===
+  <script type="module">
+    let tcbApp;
+    let authed = false;
+
     const CONFIG = {
       envId: 'mind-our-times-3g7c3va270081e5c',
       webappUrl: '/'
     };
 
-    // === CloudBase 初始化 ===
-    const tcbApp = cloudbase.init({ env: CONFIG.envId });
-    let authed = false;
+    const DEFAULT_QUESTION = {
+      question_id: '2026-02-06-ai-fear',
+      question: 'AI时代，你更担心哪个？',
+      option_a: 'AI直接干掉你',
+      option_a_desc: '有一天发现自己的工作被算法自动完成了，公司根本不需要这个岗位了',
+      option_b: '隔壁工位干掉你',
+      option_b_desc: '有一天发现同事用AI干活又快又好，老板觉得一个人能顶三个，你成了多余的那个'
+    };
+
+    try {
+      const mod = await import('https://esm.sh/@cloudbase/js-sdk@2.25.4');
+      const cloudbase = mod.default || mod;
+      tcbApp = cloudbase.init({ env: CONFIG.envId });
+    } catch (e) {
+      document.getElementById('container').innerHTML = `<div class="error">加载失败，请刷新重试</div>`;
+      throw e;
+    }
 
     async function ensureAuth() {
       if (authed) return;
@@ -328,223 +318,182 @@
       return res.result;
     }
 
-    // === 用户标识 ===
     function getVoterId() {
-      // 优先用 URL 参数中的 openid
-      const params = new URLSearchParams(window.location.search);
-      const openid = params.get('openid');
-      if (openid) return openid;
-
-      // 否则用浏览器指纹（简易版）
       let id = localStorage.getItem('mot_voter_id');
       if (!id) {
-        id = 'anon_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const info = [navigator.userAgent, navigator.language, screen.width, Date.now()].join('|');
+        let hash = 0;
+        for (let i = 0; i < info.length; i++) {
+          hash = ((hash << 5) - hash) + info.charCodeAt(i);
+          hash = hash & hash;
+        }
+        id = 'v_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
         localStorage.setItem('mot_voter_id', id);
       }
       return id;
     }
 
-    // === 获取 URL 参数 ===
     function getParams() {
-      const params = new URLSearchParams(window.location.search);
+      const p = new URLSearchParams(window.location.search);
       return {
-        digest_id: params.get('digest_id') || params.get('id'),
-        // 允许直接在 URL 中传入投票问题参数（公众号生成链接时用）
-        question: params.get('q') || params.get('question'),
-        domain: params.get('domain'),
-        yes_label: params.get('yes') || params.get('yes_label'),
-        no_label: params.get('no') || params.get('no_label')
+        question_id: p.get('question_id') || p.get('id') || DEFAULT_QUESTION.question_id
       };
     }
 
-    // === 领域图标 ===
-    const DOMAIN_ICONS = {
-      'T': '🔧 技术', 'P': '🏛️ 政治', 'H': '📜 历史',
-      'Φ': '🤔 哲学', 'R': '✝️ 宗教', 'F': '💰 金融'
-    };
-
-    // === 渲染投票页 ===
-    function renderVotePage(config) {
-      const container = document.getElementById('voteContainer');
-      const domainText = DOMAIN_ICONS[config.domain] || config.domain;
-
-      container.innerHTML = `
-        <div class="vote-header">
-          <div class="brand">Mind Our Times</div>
-          <div class="label">今日之问</div>
-        </div>
-
-        <div class="vote-card">
-          <div class="vote-domain">${domainText}</div>
-          <div class="vote-question">${escapeHtml(config.question)}</div>
-
-          <div class="vote-status" id="voteStatus">你已投过票，可更改选择</div>
-
-          <div class="vote-buttons" id="voteButtons">
-            <button class="vote-btn yes" id="btnYes" onclick="submitVote('yes')">
-              ${escapeHtml(config.yes_label)}
-            </button>
-            <button class="vote-btn no" id="btnNo" onclick="submitVote('no')">
-              ${escapeHtml(config.no_label)}
-            </button>
-          </div>
-
-          <div class="vote-result" id="voteResult">
-            <div class="result-bar-wrap">
-              <div class="result-label">
-                <span>${escapeHtml(config.yes_label)}</span>
-                <span class="pct" id="yesPct">0%</span>
-              </div>
-              <div class="result-bar">
-                <div class="result-bar-fill yes" id="yesBar" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="result-bar-wrap">
-              <div class="result-label">
-                <span>${escapeHtml(config.no_label)}</span>
-                <span class="pct" id="noPct">0%</span>
-              </div>
-              <div class="result-bar">
-                <div class="result-bar-fill no" id="noBar" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="result-total" id="resultTotal"></div>
-          </div>
-        </div>
-
-        <div class="vote-footer">
-          <a href="${CONFIG.webappUrl}">📖 查看今日全部分析 →</a>
-          <div class="tagline">Mind Our Times · 追踪时代思想脉搏</div>
-        </div>
-      `;
+    function parseOption(text) {
+      const parts = text.split(' — ');
+      return { title: parts[0] || text, desc: parts[1] || '' };
     }
 
-    // === 显示投票结果 ===
+    function render(config) {
+      const optA = parseOption(config.option_a);
+      const optB = parseOption(config.option_b);
+
+      document.getElementById('container').innerHTML = `
+        <div class="header">
+          <div class="brand">Mind Our Times</div>
+          <div class="title">今日之问</div>
+        </div>
+
+        <div class="question">${config.question}</div>
+
+        <div class="voted-status" id="votedStatus">你已投过票</div>
+
+        <div class="options" id="options">
+          <button class="option" id="btnA" data-vote="a">
+            <span class="option-label">A</span>${optA.title}
+            ${optA.desc ? `<span class="option-text">${optA.desc}</span>` : ''}
+          </button>
+          <button class="option" id="btnB" data-vote="b">
+            <span class="option-label">B</span>${optB.title}
+            ${optB.desc ? `<span class="option-text">${optB.desc}</span>` : ''}
+          </button>
+        </div>
+
+        <div class="result" id="result">
+          <div class="result-item">
+            <div class="result-header">
+              <span class="result-label">${optA.title}</span>
+              <span class="result-pct" id="pctA">0%</span>
+            </div>
+            <div class="result-bar">
+              <div class="result-bar-fill bar-a" id="barA" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="result-item">
+            <div class="result-header">
+              <span class="result-label">${optB.title}</span>
+              <span class="result-pct" id="pctB">0%</span>
+            </div>
+            <div class="result-bar">
+              <div class="result-bar-fill bar-b" id="barB" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="result-total" id="resultTotal">0 人参与</div>
+        </div>
+
+        <div class="footer">
+          <a href="${CONFIG.webappUrl}">阅读今日分析 →</a>
+          <div class="tagline">追踪时代思想脉搏</div>
+        </div>
+      `;
+
+      document.getElementById('btnA').addEventListener('click', () => vote('a'));
+      document.getElementById('btnB').addEventListener('click', () => vote('b'));
+    }
+
     function showResult(data) {
-      const resultEl = document.getElementById('voteResult');
-      const yesPct = document.getElementById('yesPct');
-      const noPct = document.getElementById('noPct');
-      const yesBar = document.getElementById('yesBar');
-      const noBar = document.getElementById('noBar');
-      const totalEl = document.getElementById('resultTotal');
-
-      yesPct.textContent = data.yes_pct + '%';
-      noPct.textContent = data.no_pct + '%';
-      totalEl.textContent = `已有 ${data.total} 人参与投票`;
-
-      resultEl.classList.add('show');
-
-      // 延迟动画
+      document.getElementById('pctA').textContent = data.percent_a + '%';
+      document.getElementById('pctB').textContent = data.percent_b + '%';
+      document.getElementById('resultTotal').textContent = data.total + ' 人参与';
+      document.getElementById('result').classList.add('show');
+      
       setTimeout(() => {
-        yesBar.style.width = data.yes_pct + '%';
-        noBar.style.width = data.no_pct + '%';
+        document.getElementById('barA').style.width = data.percent_a + '%';
+        document.getElementById('barB').style.width = data.percent_b + '%';
       }, 50);
     }
 
-    // === 提交投票 ===
+    function showToast() {
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
     let voting = false;
-    window.submitVote = async function(choice) {
+    async function vote(choice) {
       if (voting) return;
       voting = true;
 
-      const params = getParams();
-      const voterId = getVoterId();
-
-      // 视觉反馈
-      const btnYes = document.getElementById('btnYes');
-      const btnNo = document.getElementById('btnNo');
-      btnYes.disabled = true;
-      btnNo.disabled = true;
-
-      if (choice === 'yes') {
-        btnYes.classList.add('selected');
-        btnNo.classList.remove('selected');
-      } else {
-        btnNo.classList.add('selected');
-        btnYes.classList.remove('selected');
-      }
+      const btnA = document.getElementById('btnA');
+      const btnB = document.getElementById('btnB');
+      btnA.disabled = true;
+      btnB.disabled = true;
 
       try {
         const result = await callFunction('vote', {
           action: 'submit',
-          digest_id: params.digest_id,
-          domain: params.domain,
+          question_id: getParams().question_id,
           vote: choice,
-          voter_id: voterId
+          voter_id: getVoterId()
         });
 
         if (result.success) {
+          (choice === 'a' ? btnA : btnB).classList.add('selected');
           showResult(result.data);
-          // 记住投票状态
-          localStorage.setItem('mot_voted_' + params.digest_id, choice);
+          localStorage.setItem('mot_voted_' + getParams().question_id, choice);
+          if (!result.data.already_voted) showToast();
         } else {
-          alert('投票失败：' + (result.error || '未知错误'));
-          btnYes.disabled = false;
-          btnNo.disabled = false;
+          alert('投票失败');
+          btnA.disabled = false;
+          btnB.disabled = false;
         }
       } catch (e) {
-        console.error('Vote error:', e);
-        alert('网络错误，请重试');
-        btnYes.disabled = false;
-        btnNo.disabled = false;
+        alert('网络错误');
+        btnA.disabled = false;
+        btnB.disabled = false;
       }
-
       voting = false;
-    };
-
-    // === 辅助函数 ===
-    function escapeHtml(text) {
-      if (!text) return '';
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
     }
 
-    // === 初始化 ===
     async function init() {
       const params = getParams();
+      let config = null;
 
-      if (!params.digest_id || !params.question) {
-        document.getElementById('voteContainer').innerHTML =
-          '<div class="vote-error">缺少投票参数。请从公众号文章中访问投票链接。</div>';
-        return;
-      }
-
-      // 渲染页面
-      renderVotePage({
-        question: params.question,
-        domain: params.domain || '',
-        yes_label: params.yes_label || '同意',
-        no_label: params.no_label || '不同意'
-      });
-
-      // 检查是否已投票
-      const previousVote = localStorage.getItem('mot_voted_' + params.digest_id);
-      if (previousVote) {
-        // 显示之前的选择
-        const btnYes = document.getElementById('btnYes');
-        const btnNo = document.getElementById('btnNo');
-        if (previousVote === 'yes') btnYes.classList.add('selected');
-        else btnNo.classList.add('selected');
-
-        document.getElementById('voteStatus').classList.add('show');
-      }
-
-      // 加载当前结果
       try {
-        const result = await callFunction('vote', {
-          action: 'result',
-          digest_id: params.digest_id
-        });
-
-        if (result.success && result.data.total > 0) {
-          // 已有投票数据，如果用户已投过，直接显示结果
-          if (previousVote) {
-            showResult(result.data);
-          }
+        const res = await callFunction('vote', { action: 'result', question_id: params.question_id });
+        if (res.success && res.data.question) {
+          config = {
+            question_id: params.question_id,
+            question: res.data.question,
+            option_a: res.data.option_a,
+            option_b: res.data.option_b
+          };
         }
-      } catch (e) {
-        console.error('Load result error:', e);
+      } catch (e) {}
+
+      if (!config) {
+        config = {
+          question_id: params.question_id,
+          question: DEFAULT_QUESTION.question,
+          option_a: DEFAULT_QUESTION.option_a + ' — ' + DEFAULT_QUESTION.option_a_desc,
+          option_b: DEFAULT_QUESTION.option_b + ' — ' + DEFAULT_QUESTION.option_b_desc
+        };
+      }
+
+      render(config);
+
+      const prev = localStorage.getItem('mot_voted_' + params.question_id);
+      if (prev) {
+        document.getElementById('btn' + prev.toUpperCase()).classList.add('selected');
+        document.getElementById('votedStatus').classList.add('show');
+        document.getElementById('btnA').disabled = true;
+        document.getElementById('btnB').disabled = true;
+
+        try {
+          const res = await callFunction('vote', { action: 'result', question_id: params.question_id });
+          if (res.success) showResult(res.data);
+        } catch (e) {}
       }
     }
 

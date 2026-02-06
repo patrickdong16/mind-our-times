@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>今日之问 — Mind Our Times</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .vote-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .vote-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .vote-label {
+      font-size: 12px;
+      color: #764ba2;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    
+    .vote-domain {
+      display: inline-block;
+      background: #f0e6ff;
+      color: #764ba2;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .vote-question {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a2e;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    
+    .vote-source {
+      font-size: 13px;
+      color: #888;
+    }
+    
+    .vote-buttons {
+      display: flex;
+      gap: 12px;
+      margin: 24px 0;
+    }
+    
+    .vote-btn {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      background: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .vote-btn:hover {
+      border-color: #764ba2;
+      background: #faf8ff;
+    }
+    
+    .vote-btn.yes { color: #10b981; }
+    .vote-btn.no { color: #ef4444; }
+    
+    .vote-btn.selected.yes {
+      background: #10b981;
+      border-color: #10b981;
+      color: #fff;
+    }
+    
+    .vote-btn.selected.no {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #fff;
+    }
+    
+    .vote-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    
+    .vote-results {
+      display: none;
+      margin-top: 20px;
+    }
+    
+    .vote-results.show { display: block; }
+    
+    .result-bar {
+      height: 40px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 12px;
+    }
+    
+    .result-yes {
+      background: linear-gradient(90deg, #10b981, #34d399);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      transition: width 0.5s ease;
+    }
+    
+    .result-no {
+      background: linear-gradient(90deg, #f87171, #ef4444);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      transition: width 0.5s ease;
+    }
+    
+    .result-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .vote-count {
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+      margin-top: 16px;
+    }
+    
+    .vote-footer {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+    
+    .vote-footer a {
+      color: #764ba2;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .vote-footer a:hover { text-decoration: underline; }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+    }
+    
+    .error {
+      text-align: center;
+      padding: 20px;
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="vote-card">
+    <div class="vote-header">
+      <div class="vote-label">今日之问</div>
+      <div class="vote-domain" id="domainBadge">🏛️ 政治</div>
+      <h1 class="vote-question" id="question">加载中...</h1>
+      <div class="vote-source" id="source"></div>
+    </div>
+    
+    <div class="vote-buttons" id="voteButtons">
+      <button class="vote-btn yes" id="btnYes" onclick="submitVote('yes')">
+        <span id="yesLabel">同意</span>
+      </button>
+      <button class="vote-btn no" id="btnNo" onclick="submitVote('no')">
+        <span id="noLabel">不同意</span>
+      </button>
+    </div>
+    
+    <div class="vote-results" id="results">
+      <div class="result-bar">
+        <div class="result-yes" id="resultYes" style="width: 50%">50%</div>
+        <div class="result-no" id="resultNo" style="width: 50%">50%</div>
+      </div>
+      <div class="result-labels">
+        <span id="resultYesLabel">同意</span>
+        <span id="resultNoLabel">不同意</span>
+      </div>
+      <div class="vote-count" id="voteCount">已有 0 人参与投票</div>
+    </div>
+    
+    <div class="vote-footer">
+      <a href="https://mind-our-times-3g7c3va270081e5c-1397697000.tcloudbaseapp.com" target="_blank">
+        📖 查看今日全部内容 →
+      </a>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/@cloudbase/js-sdk@2.5.0/dist/index.umd.js"></script>
+  <script>
+    // 从 URL 参数获取投票 ID
+    const params = new URLSearchParams(window.location.search);
+    const voteId = params.get('id') || 'default';
+    
+    // CloudBase 初始化
+    const app = cloudbase.init({
+      env: 'mind-our-times-3g7c3va270081e5c'
+    });
+    
+    let hasVoted = false;
+    let voteData = null;
+    
+    // 检查本地存储是否已投票
+    function checkLocalVote() {
+      const voted = localStorage.getItem('vote_' + voteId);
+      return voted !== null;
+    }
+    
+    // 保存本地投票记录
+    function saveLocalVote(choice) {
+      localStorage.setItem('vote_' + voteId, choice);
+    }
+    
+    // 加载投票数据
+    async function loadVote() {
+      try {
+        // 匿名登录
+        const auth = app.auth({ persistence: 'local' });
+        await auth.signInAnonymously();
+        
+        // 调用云函数获取投票信息
+        const result = await app.callFunction({
+          name: 'vote',
+          data: { action: 'get', voteId: voteId }
+        });
+        
+        if (result.result && result.result.success) {
+          voteData = result.result.data;
+          renderVote();
+        } else {
+          showError('投票不存在');
+        }
+      } catch (e) {
+        console.error('Load vote error:', e);
+        showError('加载失败，请刷新重试');
+      }
+    }
+    
+    // 渲染投票
+    function renderVote() {
+      if (!voteData) return;
+      
+      document.getElementById('question').textContent = voteData.question;
+      document.getElementById('yesLabel').textContent = voteData.yes_label || '同意';
+      document.getElementById('noLabel').textContent = voteData.no_label || '不同意';
+      document.getElementById('resultYesLabel').textContent = voteData.yes_label || '同意';
+      document.getElementById('resultNoLabel').textContent = voteData.no_label || '不同意';
+      
+      if (voteData.source) {
+        document.getElementById('source').textContent = '来源：' + voteData.source;
+      }
+      
+      // 领域标识
+      const domainIcons = {
+        'T': '🔧 技术', 'P': '🏛️ 政治', 'H': '📜 历史',
+        'Φ': '🤔 哲学', 'R': '✝️ 宗教', 'F': '💰 金融'
+      };
+      const domain = voteData.domain || 'P';
+      document.getElementById('domainBadge').textContent = domainIcons[domain] || domain;
+      
+      // 检查是否已投票
+      if (checkLocalVote()) {
+        hasVoted = true;
+        showResults();
+      }
+    }
+    
+    // 提交投票
+    async function submitVote(choice) {
+      if (hasVoted) return;
+      
+      const btnYes = document.getElementById('btnYes');
+      const btnNo = document.getElementById('btnNo');
+      
+      btnYes.disabled = true;
+      btnNo.disabled = true;
+      
+      try {
+        const result = await app.callFunction({
+          name: 'vote',
+          data: { action: 'submit', voteId: voteId, vote: choice }
+        });
+        
+        if (result.result && result.result.success) {
+          hasVoted = true;
+          saveLocalVote(choice);
+          
+          // 更新投票数据
+          voteData.yes_count = result.result.data.yes_count;
+          voteData.no_count = result.result.data.no_count;
+          voteData.total = result.result.data.total;
+          
+          // 高亮选中的按钮
+          if (choice === 'yes') btnYes.classList.add('selected');
+          else btnNo.classList.add('selected');
+          
+          showResults();
+        } else {
+          alert('投票失败：' + (result.result?.error || '未知错误'));
+          btnYes.disabled = false;
+          btnNo.disabled = false;
+        }
+      } catch (e) {
+        console.error('Submit vote error:', e);
+        alert('投票失败，请重试');
+        btnYes.disabled = false;
+        btnNo.disabled = false;
+      }
+    }
+    
+    // 显示结果
+    function showResults() {
+      const total = (voteData.yes_count || 0) + (voteData.no_count || 0);
+      const yesPct = total > 0 ? Math.round((voteData.yes_count || 0) / total * 100) : 50;
+      const noPct = 100 - yesPct;
+      
+      document.getElementById('resultYes').style.width = yesPct + '%';
+      document.getElementById('resultYes').textContent = yesPct + '%';
+      document.getElementById('resultNo').style.width = noPct + '%';
+      document.getElementById('resultNo').textContent = noPct + '%';
+      document.getElementById('voteCount').textContent = '已有 ' + total + ' 人参与投票';
+      
+      document.getElementById('results').classList.add('show');
+      
+      // 禁用按钮
+      document.getElementById('btnYes').disabled = true;
+      document.getElementById('btnNo').disabled = true;
+    }
+    
+    function showError(msg) {
+      document.getElementById('question').textContent = msg;
+      document.getElementById('voteButtons').style.display = 'none';
+    }
+    
+    // 页面加载时初始化
+    loadVote();
+  </script>
+</body>
+</html>

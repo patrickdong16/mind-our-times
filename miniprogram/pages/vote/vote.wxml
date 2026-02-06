@@ -1,0 +1,78 @@
+<view class="container">
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 主内容 -->
+  <view class="content" wx:else>
+    <!-- 头部 -->
+    <view class="header">
+      <text class="brand">MIND OUR TIMES</text>
+      <text class="subtitle">今日之问</text>
+    </view>
+
+    <!-- 问题 -->
+    <view class="question">{{question}}</view>
+
+    <!-- 已投票提示 -->
+    <view class="voted-hint" wx:if="{{hasVoted}}">
+      <text>你已投过票</text>
+    </view>
+
+    <!-- 选项 -->
+    <view class="options">
+      <button 
+        class="option {{selectedOption === 'a' ? 'selected' : ''}} {{hasVoted ? 'disabled' : ''}}"
+        disabled="{{hasVoted || voting}}"
+        bindtap="vote"
+        data-choice="a"
+      >
+        <text class="option-label">A</text>
+        <text class="option-title">{{optionA.title}}</text>
+        <text class="option-desc" wx:if="{{optionA.desc}}">{{optionA.desc}}</text>
+      </button>
+      
+      <button 
+        class="option {{selectedOption === 'b' ? 'selected' : ''}} {{hasVoted ? 'disabled' : ''}}"
+        disabled="{{hasVoted || voting}}"
+        bindtap="vote"
+        data-choice="b"
+      >
+        <text class="option-label">B</text>
+        <text class="option-title">{{optionB.title}}</text>
+        <text class="option-desc" wx:if="{{optionB.desc}}">{{optionB.desc}}</text>
+      </button>
+    </view>
+
+    <!-- 结果 -->
+    <view class="result" wx:if="{{showResult}}">
+      <view class="result-item">
+        <view class="result-header">
+          <text class="result-label">{{optionA.title}}</text>
+          <text class="result-pct">{{percentA}}%</text>
+        </view>
+        <view class="result-bar">
+          <view class="result-bar-fill bar-a" style="width: {{percentA}}%"></view>
+        </view>
+      </view>
+      
+      <view class="result-item">
+        <view class="result-header">
+          <text class="result-label">{{optionB.title}}</text>
+          <text class="result-pct">{{percentB}}%</text>
+        </view>
+        <view class="result-bar">
+          <view class="result-bar-fill bar-b" style="width: {{percentB}}%"></view>
+        </view>
+      </view>
+      
+      <view class="result-total">{{total}} 人参与</view>
+    </view>
+
+    <!-- 底部 -->
+    <view class="footer">
+      <text class="tagline">追踪时代思想脉搏</text>
+    </view>
+  </view>
+</view>

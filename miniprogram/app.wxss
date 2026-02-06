@@ -1,0 +1,13 @@
+/* 全局样式 - New Yorker 风格 */
+page {
+  background: #fafafa;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Serif SC', Georgia, serif;
+  color: #1a1a1a;
+  line-height: 1.6;
+}
+
+.container {
+  padding: 40rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+}

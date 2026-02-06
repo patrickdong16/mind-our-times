@@ -19,28 +19,49 @@ const MAX_LIMIT = 50;
 const SEARCH_LIMIT = 50;
 
 async function getToday() {
-  const { data: latest } = await db.collection('daily_articles')
-    .orderBy('date', 'desc')
-    .limit(1)
-    .get();
-
-  if (!latest || latest.length === 0) {
-    return { date: null, articles: [], domains: [], total: 0 };
-  }
-
-  const latestDate = latest[0].date;
-
-  const { data: articles } = await db.collection('daily_articles')
-    .where({ date: latestDate })
-    .orderBy('domain', 'asc')
-    .get();
+  // 获取今天的日期（CST，UTC+8）
+  const now = new Date();
+  const cstOffset = 8 * 60; // UTC+8 in minutes
+  const cstTime = new Date(now.getTime() + (cstOffset + now.getTimezoneOffset()) * 60000);
+  const todayStr = cstTime.toISOString().slice(0, 10); // YYYY-MM-DD
+  const dayOfWeek = cstTime.getDay(); // 0=Sunday, 5=Friday
+  const isFriday = dayOfWeek === 5;
 
   const { data: domains } = await db.collection('domains')
     .where({ active: true })
     .orderBy('sort_order', 'asc')
     .get();
 
-  return { date: latestDate, articles, domains, total: articles.length };
+  // 周五：返回播客数据
+  if (isFriday) {
+    const { data: podcasts } = await db.collection('podcast_articles')
+      .where({ date: todayStr })
+      .orderBy('score', 'desc')
+      .get();
+    
+    if (podcasts && podcasts.length > 0) {
+      return { 
+        date: todayStr, 
+        articles: podcasts, 
+        domains, 
+        total: podcasts.length,
+        contentType: 'podcast'  // 标记内容类型
+      };
+    }
+  }
+
+  // 非周五或周五无播客：返回当天普通文章
+  const { data: articles } = await db.collection('daily_articles')
+    .where({ date: todayStr })
+    .orderBy('domain', 'asc')
+    .get();
+
+  if (articles && articles.length > 0) {
+    return { date: todayStr, articles, domains, total: articles.length, contentType: 'articles' };
+  }
+
+  // 当天无内容
+  return { date: todayStr, articles: [], domains, total: 0, contentType: 'empty' };
 }
 
 async function getArchive(params) {
@@ -105,10 +126,10 @@ async function getDomains() {
 // === 播客日功能（2026-02-05 新增） ===
 
 async function getPodcastLatest() {
-  // 获取最新一期播客日数据
+  // 获取最新一期播客日数据（按创建时间，返回最新写入的那期）
   try {
     const { data: latest } = await db.collection('podcast_articles')
-      .orderBy('date', 'desc')
+      .orderBy('created_at', 'desc')
       .limit(1)
       .get();
 

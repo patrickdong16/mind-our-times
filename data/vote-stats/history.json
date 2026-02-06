@@ -1,0 +1,36 @@
+{
+  "questions": {
+    "2026-02-06-ai-fear": {
+      "question": "AI时代，你更担心哪个？",
+      "publish_date": "2026-02-06",
+      "daily_totals": [
+        {
+          "date": "2026-02-06",
+          "total": 0,
+          "count_a": 0,
+          "count_b": 0
+        }
+      ]
+    }
+  },
+  "daily_snapshots": [
+    {
+      "date": "2026-02-06",
+      "timestamp": "2026-02-06T22:25:30.414329",
+      "questions": [
+        {
+          "question_id": "2026-02-06-ai-fear",
+          "question": "AI时代，你更担心哪个？",
+          "total": 0,
+          "delta": 0,
+          "count_a": 0,
+          "count_b": 0,
+          "percent_a": 0,
+          "percent_b": 0,
+          "days_active": 1,
+          "publish_date": "2026-02-06"
+        }
+      ]
+    }
+  ]
+}

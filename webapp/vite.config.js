@@ -5,10 +5,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    target: 'esnext',
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        vote: resolve(__dirname, 'vote.html')
+        vote: resolve(__dirname, 'vote.html'),
+        stats: resolve(__dirname, 'stats.html')
       }
     }
   },

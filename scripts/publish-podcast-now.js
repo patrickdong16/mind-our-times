@@ -13,8 +13,8 @@ const DATA_FILE = path.join(__dirname, '..', 'podcast-friday', 'frontend', 'data
 const rawData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 const episodes = rawData.episodes || [];
 
-// Date for the podcast (upcoming Friday: 2026-02-07)
-const podcastDate = '2026-02-07';
+// Date for the podcast (today: Friday 2026-02-06)
+const podcastDate = '2026-02-06';
 
 // Convert to podcast_articles format
 const articles = episodes.map(ep => ({
@@ -28,8 +28,12 @@ const articles = episodes.map(ep => ({
   views_formatted: ep.viewCountFormatted,
   published_at: ep.publishedAt,
   thumbnail: ep.thumbnail,
+  // 新格式字段
+  intro: ep.intro || '',              // 开篇导语
   summary_cn: ep.summary_cn || ep.summary,
   why_listen: ep.why_listen || '',
+  key_quotes: ep.key_quotes || [],    // 中英双语金句
+  guest_bio: ep.guest_bio || '',      // 嘉宾介绍
   domain: ep.domain,
   focus: ep.focus || '',
   youtube_url: ep.youtubeUrl,

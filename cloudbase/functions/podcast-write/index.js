@@ -14,10 +14,16 @@ const db = app.database();
 
 exports.main = async (event) => {
   try {
-    const { date, articles } = event;
+    const { date, articles, action } = event;
     
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return { success: false, error: '缺少或无效日期' };
+    }
+    
+    // 支持删除操作
+    if (action === 'delete') {
+      const result = await db.collection('podcast_articles').where({ date }).remove();
+      return { success: true, data: { deleted: result.deleted || 0, date } };
     }
     
     if (!Array.isArray(articles) || articles.length === 0) {
@@ -62,8 +68,11 @@ exports.main = async (event) => {
         views_formatted: article.views_formatted || article.viewCountFormatted || '',
         published_at: article.published_at || article.publishedAt || '',
         thumbnail: article.thumbnail || '',
+        intro: article.intro || '',  // 开篇导语
         summary_cn: article.summary_cn || article.summary || '',
         why_listen: article.why_listen || '',
+        key_quotes: article.key_quotes || [],
+        guest_bio: article.guest_bio || '',
         domain: article.domain || 'T',
         focus: article.focus || '',
         youtube_url: article.youtube_url || article.youtubeUrl || '',

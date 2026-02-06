@@ -1,65 +1,83 @@
-# 🎙️ Podcast Friday
+# 🎙️ Podcast Friday — 播客日
 
-**每周五精选 8 集全球顶级思想播客，AI 中文摘要，一目了然。**
+**每周五精选 8 集全球顶级思想播客，GPT-4o 中文解读，一目了然。**
 
 ## 🔗 访问地址
 
-**线上地址：** https://mind-our-times-3g7c3va270081e5c-1397697000.tcloudbaseapp.com/podcast-friday/
+- **主站播客日 Tab：** https://mind-our-times-3g7c3va270081e5c-1397697000.tcloudbaseapp.com/#podcast
+- **独立页面：** https://mind-our-times-3g7c3va270081e5c-1397697000.tcloudbaseapp.com/podcast-friday/
 
 ## 📁 项目结构
 
 ```
 podcast-friday/
-├── frontend/           # 前端静态文件
-│   ├── index.html      # 主页面
-│   ├── style.css       # 样式（移动端优先）
-│   ├── app.js          # 前端逻辑（Vanilla JS）
-│   └── data.json       # 数据文件（脚本生成）
+├── frontend/              # 独立前端静态文件
+│   ├── index.html
+│   ├── style.css
+│   ├── app.js
+│   └── data.json          # 数据文件（脚本生成）
 ├── scripts/
-│   └── fetch-youtube-data.js  # 数据抓取+AI摘要生成
+│   └── fetch-youtube-data.js    # Node.js 版数据抓取
 ├── functions/
-│   └── podcast-read/   # CloudBase 云函数（备用）
-│       ├── index.js
-│       ├── package.json
-│       └── data.json
-├── cloudbaserc.json    # CloudBase 配置
+│   └── podcast-read/      # CloudBase 云函数
+├── cloudbaserc.json
 └── README.md
+
+scripts/                    # Python 版脚本（推荐使用）
+├── fetch-podcast-episodes.py     # YouTube API 抓取
+├── generate-podcast-summaries.py # GPT-4o 摘要生成
+├── recommend-podcast-topics.py   # 深度选题推荐
+└── push-podcast-to-cloudbase.py  # 数据推送到 CloudBase
+
+cloudbase/functions/        # CloudBase 云函数
+├── articles-read/          # 已扩展：支持 podcast-latest/podcast-archive
+└── podcast-write/          # 新增：写入 podcast_articles 集合
 ```
 
-## 🚀 使用方法
+## 🚀 每周五更新流程
 
-### 更新数据（每周五运行）
+### 方法 A：Python 脚本（推荐）
+
+```bash
+# Step 1: 抓取 YouTube 数据
+python3 scripts/fetch-podcast-episodes.py
+
+# Step 2: 生成 GPT-4o 中文解读
+python3 scripts/generate-podcast-summaries.py
+
+# Step 3: 推荐 3 个深度选题给 DQ
+python3 scripts/recommend-podcast-topics.py
+
+# Step 4: 推送到 CloudBase
+python3 scripts/push-podcast-to-cloudbase.py
+```
+
+### 方法 B：Node.js 脚本
 
 ```bash
 cd mind-our-times/podcast-friday
 node scripts/fetch-youtube-data.js
 ```
 
-脚本会：
-1. 从 16 个 YouTube 频道抓取过去 30 天的视频
-2. 按时长、观看数、新鲜度综合评分
-3. 限制每频道最多 2 集，选出 Top 8
-4. 使用 OpenAI GPT-4o-mini 生成中文摘要
-5. 输出到 `frontend/data.json`
-
 ### 部署
 
 ```bash
-cd mind-our-times/podcast-friday
+# 部署主站 webapp（含播客日 tab）
+cd mind-our-times/webapp && npm run build
+tcb hosting deploy dist/ -e mind-our-times-3g7c3va270081e5c
+
+# 部署独立播客页
 tcb hosting deploy frontend/ podcast-friday/ -e mind-our-times-3g7c3va270081e5c
-```
 
-### 本地预览
-
-```bash
-cd mind-our-times/podcast-friday/frontend
-python3 -m http.server 3456
-# 打开 http://localhost:3456
+# 部署云函数
+cd mind-our-times/cloudbase
+tcb fn deploy articles-read -e mind-our-times-3g7c3va270081e5c --force
+tcb fn deploy podcast-write -e mind-our-times-3g7c3va270081e5c --force
 ```
 
 ## 📡 数据源
 
-16 个 YouTube 频道，覆盖 6 大领域：
+16 个 YouTube 频道，覆盖 4 大领域：
 
 | 领域 | 频道 |
 |------|------|
@@ -75,30 +93,47 @@ python3 -m http.server 3456
 - **综合评分：** `log10(观看数) × 时长加分 × 新鲜度衰减`
 - **多样性：** 每频道最多 2 集
 
+## ☁️ 数据库 Schema
+
+### podcast_articles 集合
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| _id | string | `podcast_{date}_{序号}` |
+| date | string | 发布日期（周五 YYYY-MM-DD） |
+| video_id | string | YouTube video ID |
+| title | string | 中文标题 |
+| title_original | string | 原标题 |
+| channel | string | 频道名 |
+| duration | string | 时长显示 |
+| duration_minutes | number | 时长（分钟） |
+| views | number | 观看数 |
+| views_formatted | string | 观看数显示 |
+| published_at | string | 发布时间 |
+| thumbnail | string | 封面图 URL |
+| summary_cn | string | 中文摘要 250-300字 |
+| why_listen | string | 为什么值得听 50字 |
+| domain | string | 领域（T/P/H/Φ/R/F） |
+| youtube_url | string | YouTube 链接 |
+| score | number | 综合评分 |
+| created_at | string | 写入时间 |
+
 ## 🎨 设计语言
 
-- **审美：** 知识分子风格，干净、高信息密度
-- **色彩：** 黑白灰主色 + #FF6B35 橙色强调
-- **字体：** Inter（英文）+ Noto Sans SC（中文）
-- **布局：** 卡片式，移动端优先
-- **交互：** 摘要折叠/展开，点击跳转 YouTube
-
-## 🔧 技术栈
-
-- **前端：** 纯 HTML/CSS/JS，零依赖
-- **数据：** YouTube Data API v3 + OpenAI GPT-4o-mini
-- **部署：** 腾讯 CloudBase 静态托管
-- **云函数：** CloudBase（预留，当前使用静态 JSON）
+- **主站播客日 Tab：** 纽约客风格，衬线字体，大封面图卡片
+- **独立页面：** 知识分子风格，无衬线，信息密集
+- **共同点：** 移动端优先、暗色模式、点击跳转 YouTube
+- **封面图：** 16:9 大图，领域标签 + 时长标签叠加
 
 ## 💰 成本
 
-- YouTube Data API：免费额度内（每次约 16×3 = ~48 requests）
-- OpenAI：~$0.02/次更新（8 × gpt-4o-mini）
-- CloudBase 托管：免费额度内
+- YouTube Data API：免费额度内（每次约 48 requests）
+- OpenAI GPT-4o：~$0.10/次更新（8 × GPT-4o）
+- CloudBase：免费额度内
 
 ## 📋 TODO
 
-- [ ] 自动化：设置 cron 每周五自动运行
-- [ ] 云函数动态化：前端从云函数获取数据
-- [ ] 往期存档：保留历史数据
+- [ ] 自动化：设置 cron 每周五 06:00 自动运行
+- [ ] 往期存档：保留历史播客数据
 - [ ] 社交分享：OG 图片生成
+- [ ] 字幕提取：用 yt-dlp 抓取字幕增强摘要质量

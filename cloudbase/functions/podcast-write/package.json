@@ -4,5 +4,6 @@
   "main": "index.js",
   "dependencies": {
     "@cloudbase/node-sdk": "^2.0.0"
-  }
+  },
+  "runtime": "Nodejs16.13"
 }

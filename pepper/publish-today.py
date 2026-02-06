@@ -4,7 +4,7 @@ import json
 import subprocess
 
 date = "2026-02-05"
-input_file = f"/Users/dq/.openclaw/workspace/memory/briefing-index/{date}-full.json"
+input_file = f"./memory/briefing-index/{date}-full.json"
 
 DOMAIN_MAP = {
     "技术": "T", "AI": "T", "科技": "T",
@@ -37,8 +37,10 @@ for item in data:
         "source": item["source"],
         "source_date": source_date,
         "source_url": item["url"],
-        "content": item["summary"],
-        "insight": item["signal"].replace("💭 题外话：", "").replace("💭题外话：", "").replace("💭 ", "")
+        "content": item["summary"],                    # 摘要 300-400字
+        "detail": item.get("detail", ""),             # 深度分析 500-700字
+        "insight": item["signal"].replace("💭 题外话：", "").replace("💭题外话：", "").replace("💭 ", ""),
+        "thumbnail": item.get("thumbnail", "")        # og:image（v1.3 新增）
     })
 
 payload = {"date": date, "articles": articles}
