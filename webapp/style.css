@@ -857,3 +857,53 @@ mark {
   transform: translateX(-50%) translateY(0);
 }
 
+
+/* 今日之问投票卡片 */
+.vote-card {
+  margin: 30px 0;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  text-align: center;
+}
+
+.vote-card-header {
+  font-size: 0.85rem;
+  color: #6c757d;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.vote-card-question {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.vote-card-link {
+  display: inline-block;
+  padding: 10px 24px;
+  background: #1a1a1a;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.vote-card-link:hover {
+  background: #333;
+}
+
+@media (max-width: 600px) {
+  .vote-card {
+    margin: 20px 0;
+    padding: 20px;
+  }
+  .vote-card-question {
+    font-size: 1.1rem;
+  }
+}

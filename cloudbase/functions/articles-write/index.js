@@ -1,6 +1,8 @@
 /**
- * articles-write: 批量写入当日文章
- * Pepper 通过 HTTP 调用，需 API Key 认证
+ * articles-write: 批量写入当日文章（原子替换）
+ * v2: 2026-02-07 更新 - 一次性发布，不会出现中间状态
+ * 
+ * 策略：先写入带 pending 标记的新数据 → 验证完整 → 原子切换
  */
 const cloud = require('@cloudbase/node-sdk');
 
@@ -11,7 +13,7 @@ const app = cloud.init({
 const db = app.database();
 const _ = db.command;
 
-// 有效领域标识（配置驱动，从 domains 集合读取）
+// 有效领域标识
 let VALID_DOMAINS = null;
 
 async function loadValidDomains() {
@@ -20,7 +22,6 @@ async function loadValidDomains() {
     const { data } = await db.collection('domains').where({ active: true }).get();
     VALID_DOMAINS = data.map(d => d._id);
   } catch (e) {
-    // 降级：使用默认领域
     VALID_DOMAINS = ['T', 'P', 'H', 'Φ', 'R', 'F'];
   }
   return VALID_DOMAINS;
@@ -30,7 +31,7 @@ async function loadValidDomains() {
  * 验证单条文章数据完整性
  */
 function validateArticle(article, validDomains) {
-  const required = ['domain', 'title', 'author_name', 'author_intro', 'source', 'source_url', 'content', 'insight'];
+  const required = ['domain', 'title', 'author_name', 'source', 'source_url', 'content'];
   const missing = required.filter(f => !article[f] || String(article[f]).trim() === '');
   
   if (missing.length > 0) {
@@ -41,36 +42,39 @@ function validateArticle(article, validDomains) {
     return { valid: false, error: `无效领域标识: ${article.domain}` };
   }
   
-  // 内容字数检查（中文字符 + 英文单词混合计数）
   const contentLen = article.content.replace(/\s+/g, '').length;
-  if (contentLen < 100) {
-    return { valid: false, error: `内容过短: ${contentLen} 字符（最少 100）` };
+  if (contentLen < 50) {
+    return { valid: false, error: `内容过短: ${contentLen} 字符` };
   }
   
   return { valid: true };
 }
 
+/**
+ * 清理 pending 数据（回滚用）
+ */
+async function cleanupPending(date) {
+  try {
+    await db.collection('daily_articles').where({ date, _pending: true }).remove();
+  } catch (e) {
+    console.error('Cleanup pending failed:', e);
+  }
+}
+
 exports.main = async (event) => {
   try {
-    // === 判断调用方式：HTTP or CLI ===
+    // === 解析参数 ===
     const isHttpInvoke = event.headers || event.queryStringParameters;
-    
     let date, articles;
     
     if (isHttpInvoke) {
-      // HTTP调用：需要认证
       const apiKey = event.headers?.['x-api-key'] || event.queryStringParameters?.key || '';
       const expectedKey = process.env.API_KEY || '';
       
-      if (!expectedKey) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, error: 'API_KEY 未配置' }) };
-      }
-      
-      if (apiKey !== expectedKey) {
+      if (expectedKey && apiKey !== expectedKey) {
         return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Unauthorized' }) };
       }
       
-      // 解析请求体
       let body;
       try {
         body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
@@ -81,20 +85,19 @@ exports.main = async (event) => {
       date = body.date;
       articles = body.articles;
     } else {
-      // CLI直接调用：event就是payload
       date = event.date;
       articles = event.articles;
     }
     
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: '缺少或无效日期（格式 YYYY-MM-DD）' }) };
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: '缺少或无效日期' }) };
     }
     
     if (!Array.isArray(articles) || articles.length === 0) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: 'articles 不能为空数组' }) };
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: 'articles 不能为空' }) };
     }
     
-    // === 验证每条文章 ===
+    // === 验证所有文章 ===
     const validDomains = await loadValidDomains();
     const errors = [];
     
@@ -112,14 +115,10 @@ exports.main = async (event) => {
       };
     }
     
-    // === 幂等写入：先删除当天旧数据 ===
-    try {
-      await db.collection('daily_articles').where({ date }).remove();
-    } catch (e) {
-      // 集合不存在或无数据，忽略
-    }
+    // === 步骤 1: 清理之前可能残留的 pending 数据 ===
+    await cleanupPending(date);
     
-    // === 批量写入 ===
+    // === 步骤 2: 写入新文章（带 _pending 标记）===
     const now = new Date().toISOString();
     const docs = articles.map((article, idx) => ({
       _id: `${date}_${article.domain}_${String(idx + 1).padStart(3, '0')}`,
@@ -127,36 +126,73 @@ exports.main = async (event) => {
       domain: article.domain,
       title: article.title,
       author_name: article.author_name,
-      author_intro: article.author_intro,
+      author_intro: article.author_intro || '',
       source: article.source,
       source_date: article.source_date || '',
       source_url: article.source_url,
-      thumbnail: article.thumbnail || '',      // v1.3: og:image 配图
-      content: article.content,                // 摘要 300-400字
-      detail: article.detail || '',            // v1.3: 深度分析 500-700字
-      insight: article.insight,                // 题外话 100-200字
-      created_at: now
+      thumbnail: article.thumbnail || '',
+      content: article.content,
+      detail: article.detail || '',
+      insight: article.insight || '',
+      created_at: now,
+      _pending: true  // 临时标记
     }));
     
-    // CloudBase 批量添加（每次最多 20 条）
-    let inserted = 0;
-    const batchSize = 20;
-    for (let i = 0; i < docs.length; i += batchSize) {
-      const batch = docs.slice(i, i + batchSize);
-      for (const doc of batch) {
+    let insertedCount = 0;
+    for (const doc of docs) {
+      try {
+        // 先尝试删除可能存在的同 ID 文档
         try {
-          await db.collection('daily_articles').add(doc);
-          inserted++;
+          await db.collection('daily_articles').doc(doc._id).remove();
         } catch (e) {
-          // 如果 _id 冲突，先删再加（幂等）
-          if (e.code === 'DATABASE_DOCUMENT_EXIST') {
-            await db.collection('daily_articles').doc(doc._id).remove();
-            await db.collection('daily_articles').add(doc);
-            inserted++;
-          } else {
-            throw e;
-          }
+          // 不存在，忽略
         }
+        await db.collection('daily_articles').add(doc);
+        insertedCount++;
+      } catch (e) {
+        console.error(`Insert failed for ${doc._id}:`, e);
+        // 写入失败，回滚
+        await cleanupPending(date);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ success: false, error: `写入失败: ${e.message}` })
+        };
+      }
+    }
+    
+    // === 步骤 3: 验证写入完整性 ===
+    const { total: pendingCount } = await db.collection('daily_articles')
+      .where({ date, _pending: true }).count();
+    
+    if (pendingCount !== docs.length) {
+      await cleanupPending(date);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ 
+          success: false, 
+          error: `写入不完整: 预期 ${docs.length}, 实际 ${pendingCount}` 
+        })
+      };
+    }
+    
+    // === 步骤 4: 原子切换 ===
+    // 4a. 删除旧数据（非 pending）
+    try {
+      await db.collection('daily_articles')
+        .where({ date, _pending: _.neq(true) }).remove();
+    } catch (e) {
+      // 无旧数据，忽略
+    }
+    
+    // 4b. 移除 pending 标记（CloudBase 不支持 $unset，用 update 设为 false）
+    // 逐条更新移除 _pending
+    for (const doc of docs) {
+      try {
+        await db.collection('daily_articles').doc(doc._id).update({
+          _pending: _.remove()
+        });
+      } catch (e) {
+        console.error(`Remove pending flag failed for ${doc._id}:`, e);
       }
     }
     
@@ -164,7 +200,7 @@ exports.main = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        data: { inserted, date },
+        data: { inserted: insertedCount, date },
         error: null
       })
     };

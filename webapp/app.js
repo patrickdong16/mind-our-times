@@ -231,7 +231,8 @@ function renderSearchArticleCard(article, keyword) {
   var icon = DOMAIN_ICONS[article.domain] || '';
   
   var titleHtml = highlightText(article.title, keyword);
-  var contentHtml = keyword ? getHighlightedSnippet(article.content, keyword) : escapeHtml(article.content);
+  var displayContent = article.detail || article.content;
+  var contentHtml = keyword ? getHighlightedSnippet(displayContent, keyword) : escapeHtml(displayContent);
   var insightHtml = highlightText(article.insight, keyword);
   
   return '<article class="article-card" data-domain="' + article.domain + '">' +
@@ -334,7 +335,7 @@ function renderArticleCard(article) {
     '<div class="article-domain">' + icon + ' ' + domainName + '</div>' +
     '<h2 class="article-title">' + escapeHtml(article.title) + '</h2>' +
     '<div class="article-meta"><span class="author">' + escapeHtml(article.author_name) + '</span> · ' + escapeHtml(article.author_intro) + '</div>' +
-    '<div class="article-content">' + escapeHtml(article.content) + '</div>' +
+    '<div class="article-content">' + escapeHtml(article.detail || article.content) + '</div>' +
     '<div class="article-insight">💭 ' + escapeHtml(article.insight) + '</div>' +
     '<div class="article-source"><a href="' + escapeHtml(article.source_url) + '" target="_blank" rel="noopener">原文 →</a> <span class="date">' + escapeHtml(article.source) + (article.source_date ? ' · ' + formatSourceDate(article.source_date) : '') + '</span></div>' +
     '</article>';
@@ -366,7 +367,36 @@ function renderToday() {
   }
   
   // 普通文章
-  content.innerHTML = '<div class="date-header">' + dateStr + '</div>' + filtered.map(renderArticleCard).join('');
+  var articlesHtml = '<div class="date-header">' + dateStr + '</div>' + filtered.map(renderArticleCard).join('');
+  
+  // 添加今日之问投票卡片
+  var voteCardHtml = '<div class="vote-card">' +
+    '<div class="vote-card-header">📊 今日之问</div>' +
+    '<div class="vote-card-question" id="vote-question">加载中...</div>' +
+    '<a class="vote-card-link" href="https://mind-our-times-3g7c3va270081e5c-1397697000.ap-shanghai.service.tcloudbase.com/vote?id=' + state.todayData.date + '-tech-vs-ideology" target="_blank">参与投票 →</a>' +
+    '</div>';
+  
+  content.innerHTML = articlesHtml + voteCardHtml;
+  
+  // 异步加载今日投票问题
+  loadTodayQuestion();
+}
+
+// 加载今日投票问题
+async function loadTodayQuestion() {
+  try {
+    var questionId = state.todayData.date + '-tech-vs-ideology';
+    var result = await tcbApp.callFunction({ name: 'vote', data: { action: 'result', question_id: questionId } });
+    if (result.result && result.result.success && result.result.data) {
+      var q = result.result.data;
+      var questionEl = document.getElementById('vote-question');
+      if (questionEl && q.question) {
+        questionEl.textContent = q.question;
+      }
+    }
+  } catch (e) {
+    // 静默失败，使用默认问题
+  }
 }
 
 function renderArchive() {
@@ -671,6 +701,17 @@ async function loadMoreArchive() { state.archivePage++; await loadArchive(true);
 
 // === 初始化 ===
 async function init() {
+  // 强制刷新：URL 带 ?refresh 或 ?nocache 参数时清除所有缓存
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('refresh') || urlParams.has('nocache') || urlParams.has('r')) {
+    console.log('[Cache] Force refresh triggered, clearing all cache...');
+    for (var key in cache) delete cache[key];
+    localStorage.removeItem('mot_cache_today');
+    localStorage.removeItem('mot_cache_podcast');
+    // 清除 URL 参数，避免重复刷新
+    window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+  }
+  
   try {
     var cached = getCached('domains');
     if (cached) {

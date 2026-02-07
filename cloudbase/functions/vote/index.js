@@ -24,6 +24,13 @@ const QUESTIONS = {
     question: 'AI时代，你更担心哪个？',
     option_a: 'AI直接干掉你 — 有一天发现自己的工作被算法自动完成了，公司根本不需要这个岗位了',
     option_b: '隔壁工位干掉你 — 有一天发现同事用AI干活又快又好，老板觉得一个人能顶三个，你成了多余的那个'
+  },
+  '2026-02-07-tech-vs-ideology': {
+    question_id: '2026-02-07-tech-vs-ideology',
+    question: '当技术能救命，但来自敌人，你会接受吗？',
+    option_a: '接受 — 生存比面子重要，技术无国界，能救人就该用',
+    option_b: '拒绝 — 依赖敌人的技术就是投降，宁可自己慢慢解决',
+    context: '伊朗正面临严重水危机，而最有效的解决方案恰恰掌握在宿敌以色列手中。'
   }
 };
 
@@ -34,18 +41,23 @@ async function getQuestion(questionId) {
     return QUESTIONS[questionId];
   }
   
-  // 再查数据库
-  const { data } = await db.collection('vote_questions')
-    .where({ _id: questionId })
-    .get();
-  
-  if (data.length > 0) {
-    return {
-      question_id: data[0]._id,
-      question: data[0].question,
-      option_a: data[0].option_a || data[0].yes_label,
-      option_b: data[0].option_b || data[0].no_label
-    };
+  // 再查数据库（集合可能不存在）
+  try {
+    const { data } = await db.collection('vote_questions')
+      .where({ _id: questionId })
+      .get();
+    
+    if (data.length > 0) {
+      return {
+        question_id: data[0]._id,
+        question: data[0].question,
+        option_a: data[0].option_a || data[0].yes_label,
+        option_b: data[0].option_b || data[0].no_label,
+        context: data[0].context || ''
+      };
+    }
+  } catch (e) {
+    // 集合不存在时返回 null
   }
   
   return null;
@@ -171,49 +183,57 @@ async function checkVote(params) {
 
 // === 创建/更新投票问题 ===
 async function createVote(params) {
-  const { question_id, question, option_a, option_b, domain, source, article_id } = params;
+  const { question_id, question, option_a, option_b, context, domain, source, article_id, date } = params;
   
   if (!question_id) return { success: false, error: '缺少 question_id' };
   if (!question) return { success: false, error: '缺少 question' };
   
-  // 检查是否已存在
-  const { data: existing } = await db.collection('vote_questions')
-    .where({ _id: question_id })
-    .get();
-  
-  if (existing.length > 0) {
-    // 更新
-    await db.collection('vote_questions').doc(question_id).update({
-      question,
-      option_a: option_a || '选项A',
-      option_b: option_b || '选项B',
-      domain: domain || '',
-      source: source || '',
-      article_id: article_id || '',
-      updated_at: new Date()
-    });
-    return { success: true, data: { question_id, updated: true } };
-  }
-  
-  // 创建
-  await db.collection('vote_questions').add({
-    _id: question_id,
+  const docData = {
     question,
     option_a: option_a || '选项A',
     option_b: option_b || '选项B',
+    context: context || '',
     domain: domain || '',
     source: source || '',
     article_id: article_id || '',
-    created_at: new Date()
-  });
+    date: date || new Date().toISOString().slice(0, 10),
+    updated_at: new Date()
+  };
   
-  return { success: true, data: { question_id, created: true } };
+  try {
+    // 先尝试更新（如果存在）
+    const updateResult = await db.collection('vote_questions').doc(question_id).update(docData);
+    if (updateResult.updated > 0) {
+      return { success: true, data: { question_id, updated: true } };
+    }
+  } catch (e) {
+    // 文档不存在或集合不存在，尝试创建
+  }
+  
+  // 创建新文档
+  try {
+    await db.collection('vote_questions').add({
+      _id: question_id,
+      ...docData,
+      created_at: new Date()
+    });
+    return { success: true, data: { question_id, created: true } };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
 }
 
 // === 获取所有问题统计（供日报使用） ===
 async function getAllStats() {
-  // 获取所有问题配置
-  const { data: questions } = await db.collection('vote_questions').get();
+  // 获取所有问题配置（集合可能不存在）
+  let questions = [];
+  try {
+    const result = await db.collection('vote_questions').get();
+    questions = result.data || [];
+  } catch (e) {
+    // 集合不存在时返回空
+    questions = [];
+  }
   
   // 合并硬编码的问题
   const allQuestions = [...questions];

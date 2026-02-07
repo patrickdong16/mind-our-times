@@ -70,7 +70,14 @@ async function getArchive(params) {
   const domain = params.domain || null;
   const skip = (page - 1) * limit;
 
-  const where = {};
+  // 排除今天的内容（今天只在"今日"Tab 显示）
+  const now = new Date();
+  const cstOffset = 8 * 60;
+  const cstTime = new Date(now.getTime() + (cstOffset + now.getTimezoneOffset()) * 60000);
+  const todayStr = cstTime.toISOString().slice(0, 10);
+
+  const _ = db.command;
+  const where = { date: _.neq(todayStr) };
   if (domain) where.domain = domain;
 
   const { total } = await db.collection('daily_articles').where(where).count();

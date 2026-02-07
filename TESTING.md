@@ -1,14 +1,16 @@
 # Mind Our Times — 测试规范
 
-> **版本**：v1.6  
-> **日期**：2026-02-06  
-> **对应需求**：REQUIREMENTS.md v1.6  
-> **对应架构**：TDD.md v1.6
+> **版本**：v1.8  
+> **日期**：2026-02-07  
+> **对应需求**：REQUIREMENTS.md v1.8  
+> **对应架构**：TDD.md v1.8
 
 ### 更新日志
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
+| v1.8 | 2026-02-07 | cron 使用 mot-full-workflow.py 验证；H5 投票测试标记废弃 |
+| v1.7 | 2026-02-07 | **防退步**：新增作者验证回归测试（AV-01~05）、质检禁用词扩充验证 |
 | v1.6 | 2026-02-06 | **首发验证完成**：投票系统端到端测试、公众号草稿创建测试、阅读原文跳转测试 |
 | v1.5 | 2026-02-06 | 投票问题质量测试（轻松有趣验证）、周五播客日验证（确认无RSS内容生成） |
 | v1.4 | 2026-02-06 | 投票系统测试（H5页面+云函数+防重复）、选题结构化测试 |
@@ -279,6 +281,47 @@
 | 国内网络波动 | API 偶尔超时 | 前端加 loading 状态 + 重试 |
 | RSS 源批量不可达 | 当日内容不足 10 篇 | 脚本容错 + 降级提示 |
 | Twikoo 评论被滥用 | 垃圾评论 | Akismet 反垃圾 + DQ 审核 |
+
+---
+
+---
+
+## 七、作者验证回归测试（v1.7 新增，02-07 事故后）
+
+**背景**：02-07 首发时 10 篇文章中 9 篇 author 为 "本文来源于[媒体名]"，质检未拦住。
+
+| 编号 | 测试场景 | 验证方式 | 通过标准 |
+|------|----------|----------|----------|
+| AV-01 | 质检拦截假作者 | `python3 scripts/mot-quality-check.py 2026-02-07` | 包含"本文来源于"的文章被标记为不通过 |
+| AV-02 | 禁用词完整性 | 检查 FORBIDDEN_PHRASES 列表 | 包含：本文来源于、来源：、需人工核实、需人工补充 |
+| AV-03 | 页面 meta 提取 | `python3 -c "from scripts.mot_content_generator import extract_author_from_url; print(extract_author_from_url('https://www.foreignaffairs.com/...'))"` | 返回真实作者名或 None |
+| AV-04 | 生成后全部有真实作者 | 运行 mot-content-generator → 检查 JSON | 0 篇包含"本文来源于" |
+| AV-05 | 选题推荐格式 | 运行 mot-daily-workflow → 检查 Telegram 输出 | 包含星级评分(★)和投票问题方向 |
+
+**回归测试命令**：
+
+```bash
+# 1. 质检能拦住假作者
+python3 scripts/mot-quality-check.py 2026-02-07
+# 期望：❌ 不通过，列出 "本文来源于" 的文章
+
+# 2. 检查禁用词列表
+python3 -c "
+import ast
+with open('scripts/mot-quality-check.py') as f:
+    src = f.read()
+idx = src.index('FORBIDDEN_PHRASES')
+end = src.index(']', idx) + 1
+phrases = src[idx:end]
+print(phrases)
+assert '本文来源于' in phrases, 'MISSING: 本文来源于'
+assert '来源：' in phrases, 'MISSING: 来源：'
+print('✅ 禁用词完整')
+"
+
+# 3. 验证 extract_author_from_url 存在
+grep -q "def extract_author_from_url" scripts/mot-content-generator.py && echo "✅ 函数存在" || echo "❌ 函数缺失"
+```
 
 ---
 

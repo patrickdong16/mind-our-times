@@ -2,6 +2,12 @@
   "name": "articles-write",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": "16.13"
+  },
+  "cloudbase": {
+    "runtime": "Nodejs16.13"
+  },
   "dependencies": {
     "@cloudbase/node-sdk": "^2.6.5"
   }
